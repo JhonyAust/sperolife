@@ -114,13 +114,13 @@ export default function Header() {
             {/* Logo */}
             <Link href="/" className="group flex items-center gap-2 relative">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-black rounded-lg blur-lg opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-black p-3 rounded-lg transform group-hover:scale-110 transition-all duration-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#ED1D26] to-[#F7D000] rounded-lg blur-lg opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative bg-gradient-to-br from-[#ED1D26] via-red-700 to-pink-700 p-3 rounded-lg transform group-hover:scale-110 transition-all duration-500">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-black bg-gradient-to-r from-red-600 via-black to-red-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-black bg-gradient-to-r from-red-600 via-pink-700 to-red-600 bg-clip-text text-transparent">
                   SPEROLIFE
                 </span>
                 <span className="text-[10px] text-gray-500 font-medium tracking-widest -mt-1">
@@ -132,7 +132,7 @@ export default function Header() {
             {/* Search Bar */}
             <div className="flex-1 max-w-2xl mx-8">
               <form onSubmit={handleSearch} className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-black rounded-full blur-md opacity-0 group-focus-within:opacity-30 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-700 rounded-full blur-md opacity-0 group-focus-within:opacity-30 transition-opacity duration-500"></div>
                 <div className="relative flex items-center">
                   <Search className="absolute left-4 w-5 h-5 text-gray-400 group-focus-within:text-red-600 transition-colors duration-300" />
                   <Input
@@ -145,7 +145,7 @@ export default function Header() {
                   <Button
                     type="submit"
                     size="icon"
-                    className="absolute right-1 h-10 w-10 rounded-full bg-gradient-to-r from-red-600 to-black hover:from-red-700 hover:to-gray-900 shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="absolute right-1 h-10 w-10 rounded-full bg-gradient-to-r from-red-600 to-pink-700 hover:from-red-700 hover:to-gray-900 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     <Search className="w-4 h-4" />
                   </Button>
@@ -198,7 +198,7 @@ export default function Header() {
                     >
                       <Avatar className="h-9 w-9 ring-2 ring-red-600 ring-offset-2 cursor-pointer hover:scale-110 transition-transform duration-300">
                         <AvatarImage src={user.avatar} />
-                        <AvatarFallback className="bg-gradient-to-br from-red-600 to-black text-white font-bold">
+                        <AvatarFallback className="bg-gradient-to-br from-red-600 to-pink-700 text-white font-bold">
                           {user.name?.[0]?.toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -236,7 +236,7 @@ export default function Header() {
               ) : (
                 <Button
                   onClick={() => setShowAuthModal(true)}
-                  className="bg-gradient-to-r from-red-600 to-black hover:from-red-700 hover:to-gray-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  className="bg-gradient-to-r from-red-600 to-pink-700 hover:from-red-700 hover:to-gray-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   <User className="w-4 h-4 mr-2" />
                   Sign In
@@ -259,10 +259,10 @@ export default function Header() {
 
             {/* Mobile Logo */}
             <Link href="/" className="flex items-center gap-1">
-              <div className="bg-gradient-to-br from-red-600 to-black p-2 rounded-lg">
+              <div className="bg-gradient-to-br from-red-600 to-pink-700 p-2 rounded-lg">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-black bg-gradient-to-r from-red-600 to-black bg-clip-text text-transparent">
+              <span className="text-lg font-black bg-gradient-to-r from-red-600 to-pink-700 bg-clip-text text-transparent">
                 SPEROLIFE
               </span>
             </Link>
@@ -305,7 +305,7 @@ export default function Header() {
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 rounded-full bg-gradient-to-r from-red-600 to-black"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 rounded-full bg-gradient-to-r from-red-600 to-pink-700"
                 >
                   Search
                 </Button>
@@ -331,7 +331,7 @@ export default function Header() {
                       {category.badge}
                     </Badge>
                   )}
-                  <div className="absolute -bottom-3 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-black scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                  <div className="absolute -bottom-3 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-700scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
                 </Link>
               ))}
             </nav>
@@ -347,7 +347,7 @@ export default function Header() {
               <div className="bg-gradient-to-br from-red-600 to-black p-2 rounded-lg">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <SheetTitle className="text-xl font-black bg-gradient-to-r from-red-600 to-black bg-clip-text text-transparent">
+              <SheetTitle className="text-xl font-black bg-gradient-to-r from-red-600 to-pink-700 bg-clip-text text-transparent">
                 SPEROLIFE
               </SheetTitle>
             </div>
@@ -359,7 +359,7 @@ export default function Header() {
               <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-red-50 to-gray-50 border border-red-100">
                 <Avatar className="h-12 w-12 ring-2 ring-red-600 ring-offset-2">
                   <AvatarImage src={user.avatar} />
-                  <AvatarFallback className="bg-gradient-to-br from-red-600 to-black text-white font-bold">
+                  <AvatarFallback className="bg-gradient-to-br from-red-600 to-pink-700 text-white font-bold">
                     {user.name?.[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -374,7 +374,7 @@ export default function Header() {
                   setMobileMenuOpen(false);
                   setShowAuthModal(true);
                 }}
-                className="w-full bg-gradient-to-r from-red-600 to-black hover:from-red-700 hover:to-gray-900"
+                className="w-full bg-gradient-to-r from-red-600 to-pink-700 hover:from-red-700 hover:to-gray-900"
               >
                 <User className="w-4 h-4 mr-2" />
                 Sign In
