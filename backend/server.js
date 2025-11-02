@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const cartRoutes = require('./routes/cart');
 const wishlistRoutes = require('./routes/wishlist');
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 
 app.use(helmet());
@@ -30,6 +31,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

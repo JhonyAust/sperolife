@@ -368,9 +368,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </span>
                   </div>
 
-                  <h1 className="text-3xl font-bold mb-2">
-                    {activeTab === "login" ? "Sign In" : "Create Account"}
-                  </h1>
+                  <h1
+                      className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2"
+                    >
+                      {activeTab === "login" ? "Sign In" : "Create Account"}
+                    </h1>
+
 
                   <p className="text-sm text-gray-600">
                     {activeTab === "login" ? (
@@ -417,7 +420,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={loginData.email}
                             onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                             placeholder="your@email.com"
-                            className="pl-10"
+                            className="pl-10 text-gray-700"
                             required
                           />
                         </div>
@@ -433,7 +436,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={loginData.password}
                             onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                             placeholder="Enter your password"
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-10 text-gray-700"
                             required
                           />
                           <button
@@ -519,7 +522,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={registerData.name}
                             onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                             placeholder="John Doe"
-                            className="pl-10"
+                            className="pl-10 text-gray-700"
                             required
                           />
                         </div>
@@ -535,7 +538,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={registerData.email}
                             onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                             placeholder="your@email.com"
-                            className="pl-10"
+                            className="pl-10 text-gray-700"
                             required
                           />
                         </div>
@@ -554,7 +557,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                               setShowPasswordRequirements(e.target.value.length > 0);
                             }}
                             placeholder="Create a strong password"
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-10 text-gray-700"
                             required
                           />
                           <button
@@ -607,7 +610,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={registerData.confirmPassword}
                             onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                             placeholder="Confirm your password"
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-10 text-gray-700"
                             required
                           />
                           <button
