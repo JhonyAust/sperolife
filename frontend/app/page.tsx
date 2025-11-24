@@ -1,272 +1,786 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import Header from '@/components/layout/header';
-export default function Home() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+import React, { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, Trophy, Clock, ArrowRight, Flame } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import ProductCard from "@/components/products/ProductCard";
+import { getActiveBanners } from "@/lib/redux/slices/bannerSlice";
+import { fetchProducts } from "@/lib/redux/slices/productSlice";
+import { toast } from "react-hot-toast";
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+export default function ModernHomePage() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeTab, setActiveTab] = useState("bestseller");
+  const [isVisible, setIsVisible] = useState(false);
+  const [allProducts, setAllProducts] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
+  
+  // SubCategory filtered products
+  const [shirtsProducts, setShirtsProducts] = useState([]);
+  const [shakersProducts, setShakersProducts] = useState([]);
+  const [sneakersProducts, setSneakersProducts] = useState([]);
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  // Get data from Redux
+  const { banners, loading: bannersLoading } = useSelector((state) => state.banner || { banners: [], loading: false });
+  const { user } = useSelector((state) => state.auth || { user: null });
+  const { product, loading: productsLoading } = useSelector((state) => state.product || { products: [], loading: false });
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    class Particle {
-      x: number;
-      y: number;
-      size: number;
-      speedX: number;
-      speedY: number;
-      color: string;
-
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 3 + 1;
-        this.speedX = Math.random() * 1 - 0.5;
-        this.speedY = Math.random() * 1 - 0.5;
-        const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981'];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-      }
-
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-
-        if (this.x > canvas.width) this.x = 0;
-        if (this.x < 0) this.x = canvas.width;
-        if (this.y > canvas.height) this.y = 0;
-        if (this.y < 0) this.y = canvas.height;
-      }
-
-      draw() {
-        if (!ctx) return;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    const particles: Particle[] = [];
-    const particleCount = 100;
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
-    }
-
-    function connectParticles() {
-      if (!ctx) return;
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 120) {
-            ctx.strokeStyle = `rgba(139, 92, 246, ${1 - distance / 120})`;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    function animate() {
-      if (!ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach((particle) => {
-        particle.update();
-        particle.draw();
-      });
-
-      connectParticles();
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+  // Filter active banners and sort by position
+  const activeBanners = banners?.filter((banner) => banner.isActive)?.sort((a, b) => a.position - b.position) || [];
 
   useEffect(() => {
-    const launchDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).getTime();
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const distance = launchDate - now;
-
-      setCountdown({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((distance % (1000 * 60)) / 1000),
+    setIsVisible(true);
+    
+    dispatch(getActiveBanners())
+      .unwrap()
+      .then((response) => {
+        console.log('Banners response:', response);
+      })
+      .catch((error) => {
+        console.error('Banner fetch error:', error);
       });
-    };
+    
+    dispatch(fetchProducts({ page: 1, limit: 100 })).then((res) => {
+      if (res?.payload?.products) {
+        const allProds = res.payload.products;
+        setAllProducts(allProds);
+        
+        setBestSellers(allProds.filter(p => p.isBestSeller).slice(0, 10));
+        setNewArrivals(allProds.filter(p => p.isNewArrival).slice(0, 10));
+        setDiscounts(allProds.filter(p => p.salePrice && p.salePrice < p.price).slice(0, 10));
+      }
+    });
+  }, [dispatch]);
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+  // Filter subcategory products based on active tab
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      filterSubCategoryProducts();
+    }
+  }, [activeTab, bestSellers, newArrivals, discounts, allProducts]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const filterSubCategoryProducts = () => {
+    let sourceProducts = [];
+
+    switch (activeTab) {
+      case "bestseller":
+        sourceProducts = bestSellers;
+        break;
+      case "new":
+        sourceProducts = newArrivals;
+        break;
+      case "discount":
+        sourceProducts = discounts;
+        break;
+      default:
+        sourceProducts = allProducts;
+    }
+
+    const shirts = sourceProducts.filter(p => 
+      p.subCategory?.toLowerCase().includes('shirt')
+    );
+    
+    const shakers = sourceProducts.filter(p => 
+      p.subCategory?.toLowerCase().includes('shacket')
+    );
+    
+    const sneakers = sourceProducts.filter(p => 
+      p.subCategory?.toLowerCase().includes('sneaker')
+    );
+
+    setShirtsProducts(shirts.slice(0, 5));
+    setShakersProducts(shakers.slice(0, 5));
+    setSneakersProducts(sneakers.slice(0, 5));
+  };
+
+  useEffect(() => {
+    if (activeBanners.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % activeBanners.length);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [activeBanners.length]);
+
+  const hasContent = (banner) => {
+    return banner.title || banner.subtitle || banner.description || banner.link;
+  };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <Header/>
-      <canvas ref={canvasRef} className="absolute inset-0" />
-
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 text-center">
-        {/* Animated Logo/Icon */}
-        <div className="mb-8 animate-bounce">
-          <div className="relative">
-            <div className="absolute inset-0 animate-ping rounded-full bg-purple-500 opacity-20" />
-            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl">
-              <svg
-                className="h-12 w-12 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#EAEDED]">
+      {/* Hero Banner Section */}
+      <section className="relative h-[350px] md:h-[500px] lg:h-[600px] overflow-hidden">
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(253,0,2,0.2),transparent_50%)] animate-pulse-slow" />
         </div>
 
-        {/* Main Title */}
-        <h1 className="mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-6xl font-bold text-transparent md:text-8xl">
-          Coming Soon
-        </h1>
+        {activeBanners.length > 0 ? (
+          <>
+            {activeBanners.map((banner, index) => {
+              const showContent = hasContent(banner);
+              
+              return (
+                <div
+                  key={banner._id}
+                  className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                    index === currentSlide
+                      ? "opacity-100 scale-100"
+                      : "opacity-0 scale-105"
+                  }`}
+                >
+                  <div className="absolute inset-0">
+                    <img
+                      src={banner.image}
+                      alt={banner.title || 'Banner'}
+                      className="w-full h-full object-cover"
+                    />
+                    {showContent && (
+                      <div 
+                        className="absolute inset-0"
+                        style={{ 
+                          background: `linear-gradient(to right, ${banner.backgroundColor || '#000000'}dd, ${banner.backgroundColor || '#000000'}88, transparent)` 
+                        }}
+                      />
+                    )}
+                  </div>
 
-        {/* Subtitle */}
-        <p className="mb-12 max-w-2xl text-xl text-gray-300 md:text-2xl">
-          We're crafting something <span className="font-bold text-purple-400">extraordinary</span>.
-          Stay tuned for the launch!
-        </p>
+                  {showContent && (
+                    <div className="relative h-full flex items-center">
+                      <div className="container mx-auto px-4 md:px-8 lg:px-16">
+                        <div className="max-w-2xl space-y-4 md:space-y-6 animate-slide-up">
+                          {banner.subtitle && (
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-[#FD0002] animate-pulse" />
+                              <span 
+                                className="text-xs md:text-sm font-semibold uppercase tracking-wider"
+                                style={{ color: banner.textColor || '#ffffff' }}
+                              >
+                                {banner.subtitle}
+                              </span>
+                            </div>
+                          )}
+                          {banner.title && (
+                            <h1
+                              className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight"
+                              style={{ color: banner.textColor || '#ffffff' }}
+                            >
+                              {banner.title}
+                            </h1>
+                          )}
+                          {banner.description && (
+                            <p 
+                              className="text-sm md:text-lg lg:text-xl max-w-xl"
+                              style={{ color: banner.textColor || '#ffffff', opacity: 0.9 }}
+                            >
+                              {banner.description}
+                            </p>
+                          )}
+                          {banner.link && (
+                            <button
+                              onClick={() => router.push(banner.link)}
+                              className="group/btn relative px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-sm md:text-base overflow-hidden transition-all duration-300 hover:scale-105"
+                              style={{
+                                backgroundColor: banner.buttonColor || "#FD0002",
+                                color: banner.buttonColor === "#000000" ? "#fff" : "#000",
+                              }}
+                            >
+                              <span className="relative z-10 flex items-center gap-2">
+                                {banner.linkText || "Shop Now"}
+                                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:translate-x-1 transition-transform" />
+                              </span>
+                              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-        {/* Countdown Timer */}
-        <div className="mb-16 grid grid-cols-4 gap-4 md:gap-8">
-          {[
-            { label: 'Days', value: countdown.days },
-            { label: 'Hours', value: countdown.hours },
-            { label: 'Minutes', value: countdown.minutes },
-            { label: 'Seconds', value: countdown.seconds },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="group relative overflow-hidden rounded-2xl bg-white/10 p-4 backdrop-blur-lg transition-all hover:scale-105 hover:bg-white/20 md:p-6"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 opacity-0 transition-opacity group-hover:opacity-100" />
-              <div className="relative">
-                <div className="text-3xl font-bold text-white md:text-5xl">
-                  {item.value.toString().padStart(2, '0')}
-                </div>
-                <div className="mt-2 text-xs uppercase tracking-wider text-gray-400 md:text-sm">
-                  {item.label}
-                </div>
+            {activeBanners.length > 1 && (
+              <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
+                {activeBanners.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`transition-all duration-500 rounded-full ${
+                      currentSlide === index
+                        ? "w-8 md:w-12 h-2 md:h-3 bg-[#FD0002]"
+                        : "w-2 md:w-3 h-2 md:h-3 bg-white/50 hover:bg-white/80"
+                    }`}
+                  />
+                ))}
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Email Notification */}
-        <div className="w-full max-w-md">
-          <div className="group relative">
-            <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 opacity-75 blur transition duration-300 group-hover:opacity-100" />
-            <div className="relative flex overflow-hidden rounded-full bg-white/10 backdrop-blur-lg">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 bg-transparent px-6 py-4 text-white placeholder-gray-400 outline-none"
-              />
-              <button className="px-6 py-4 font-semibold text-white transition hover:bg-white/10">
-                Notify Me
+            )}
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-r from-gray-800 to-gray-900">
+            <div className="text-center space-y-4 px-4">
+              <h1 className="text-3xl md:text-5xl lg:text-7xl font-black text-white">
+                Welcome to Our Store
+              </h1>
+              <p className="text-lg md:text-xl text-white/80">Discover Amazing Products</p>
+              <button
+                onClick={() => router.push("/products")}
+                className="px-6 py-3 md:px-8 md:py-4 bg-[#FD0002] text-white rounded-full font-bold text-sm md:text-lg hover:scale-105 transition-transform"
+              >
+                Shop Now
               </button>
             </div>
           </div>
-        </div>
+        )}
+      </section>
 
-        {/* Social Links */}
-        <div className="mt-12 flex gap-6">
-          <a
-            href="#"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-lg transition-all hover:scale-110 hover:bg-white/20"
-          >
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 opacity-0 transition-opacity group-hover:opacity-100" />
-            <svg className="relative h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
-            </svg>
-          </a>
-          <a
-            href="#"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-lg transition-all hover:scale-110 hover:bg-white/20"
-          >
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 opacity-0 transition-opacity group-hover:opacity-100" />
-            <svg className="relative h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-            </svg>
-          </a>
-          <a
-            href="#"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-lg transition-all hover:scale-110 hover:bg-white/20"
-          >
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 opacity-0 transition-opacity group-hover:opacity-100" />
-            <svg className="relative h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-          </a>
-          <a
-            href="#"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-lg transition-all hover:scale-110 hover:bg-white/20"
-          >
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 opacity-0 transition-opacity group-hover:opacity-100" />
-            <svg className="relative h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-            </svg>
-          </a>
+      {/* Mobile Tabs Section */}
+      <section className="md:hidden sticky top-0 z-40 bg-white border-b border-gray-200">
+        <div className="flex overflow-x-auto hide-scrollbar">
+          <TabButton
+            active={activeTab === "bestseller"}
+            onClick={() => setActiveTab("bestseller")}
+            icon={<Trophy className="w-4 h-4" />}
+            label="Best Sellers"
+            color="amber"
+          />
+          <TabButton
+            active={activeTab === "new"}
+            onClick={() => setActiveTab("new")}
+            icon={<Clock className="w-4 h-4" />}
+            label="New Arrivals"
+            color="blue"
+          />
+          <TabButton
+            active={activeTab === "discount"}
+            onClick={() => setActiveTab("discount")}
+            icon={<Flame className="w-4 h-4" />}
+            label="Hot Deals"
+            color="red"
+          />
         </div>
+      </section>
 
-        {/* Footer Text */}
-        <p className="mt-16 text-sm text-gray-400">
-          © 2025 SperoLife. All rights reserved.
-        </p>
+      {/* Mobile Tab Content - WITH SUBCATEGORIES */}
+      <section className="md:hidden py-4 bg-white">
+        <div className="container mx-auto px-4 space-y-6">
+          {shirtsProducts.length > 0 && (
+            <SubCategoryRow
+              title="Shirts"
+              icon="👕"
+              products={shirtsProducts}
+              loading={productsLoading}
+              onSeeAll={() => router.push(`/products?subCategory=shirts`)}
+            />
+          )}
+
+          {shakersProducts.length > 0 && (
+            <SubCategoryRow
+              title="Shackets"
+              icon="🧥"
+              products={shakersProducts}
+              loading={productsLoading}
+              onSeeAll={() => router.push(`/products?subCategory=shacket`)}
+            />
+          )}
+
+          {sneakersProducts.length > 0 && (
+            <SubCategoryRow
+              title="Sneakers"
+              icon="👟"
+              products={sneakersProducts}
+              loading={productsLoading}
+              onSeeAll={() => router.push(`/products?subCategory=sneakers`)}
+            />
+          )}
+
+          {shirtsProducts.length === 0 && shakersProducts.length === 0 && sneakersProducts.length === 0 && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500 text-sm">No products found for this category</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Desktop Sections - NOW WITH HORIZONTAL SCROLL */}
+      {/* Best Sellers - Desktop */}
+      {bestSellers.length > 0 && (
+        <section className="hidden md:block py-8 lg:py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-8 lg:px-16">
+            <SectionHeader
+              icon={<Trophy className="w-6 h-6 md:w-7 md:h-7 text-amber-600" />}
+              badge="Top Picks"
+              title="Best Sellers"
+              gradient="from-amber-700 via-amber-600 to-amber-500"
+              accentColor="amber"
+              onViewAll={() => router.push("/products?bestSeller=true")}
+            />
+            <HorizontalScroll products={bestSellers} loading={productsLoading} />
+          </div>
+        </section>
+      )}
+
+      {/* New Arrivals - Desktop */}
+      {newArrivals.length > 0 && (
+        <section className="hidden md:block py-8 lg:py-12 bg-[#EAEDED]">
+          <div className="container mx-auto px-4 md:px-8 lg:px-16">
+            <SectionHeader
+              icon={<Clock className="w-6 h-6 md:w-7 md:h-7 text-blue-700 animate-pulse" />}
+              badge="Just Landed"
+              title="New Arrivals"
+              gradient="from-blue-700 via-blue-600 to-blue-500"
+              accentColor="blue"
+              onViewAll={() => router.push("/products?newArrival=true")}
+            />
+            <HorizontalScroll products={newArrivals} loading={productsLoading} />
+          </div>
+        </section>
+      )}
+
+      {/* Hot Deals - Desktop */}
+      {discounts.length > 0 && (
+        <section className="hidden md:block py-8 lg:py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-8 lg:px-16">
+            <SectionHeader
+              icon={<Flame className="w-6 h-6 md:w-7 md:h-7 text-red-600 animate-pulse" />}
+              badge="Limited Time"
+              title="Hot Deals"
+              gradient="from-red-700 via-[#FD0002] to-red-500"
+              accentColor="red"
+              onViewAll={() => router.push("/products?filter=discount")}
+            />
+            <HorizontalScroll products={discounts} loading={productsLoading} />
+          </div>
+        </section>
+      )}
+
+      {/* All Products Grid */}
+      <section className="py-8 lg:py-12 bg-[#EAEDED]">
+        <div className="container mx-auto px-4 md:px-8 lg:px-16">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
+              <span className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
+                Complete Collection
+              </span>
+            </div>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
+              Explore Our Full Collection
+            </h2>
+          </div>
+
+          {productsLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="bg-gray-200 rounded-lg h-80 animate-pulse" />
+              ))}
+            </div>
+          ) : allProducts.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+              {allProducts.slice(0, 15).map((product, index) => (
+                <div
+                  key={product._id}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.03}s` }}
+                >
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white rounded-lg">
+              <ShoppingBag className="w-16 h-16 md:w-20 md:h-20 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500 text-lg md:text-xl">No products available</p>
+            </div>
+          )}
+
+          {allProducts.length > 15 && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => router.push("/products")}
+                className="bg-gradient-to-r from-[#FD0002] to-[#FF6B6B] hover:from-[#FF6B6B] hover:to-[#FD0002] text-white px-6 py-3 md:px-8 md:py-4 rounded-lg font-bold text-sm md:text-base transition-all duration-300 hover:scale-105 group"
+              >
+                <span className="flex items-center gap-2">
+                  View All Products
+                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <style jsx>{`
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.05;
+          }
+          50% {
+            opacity: 0.15;
+          }
+        }
+
+        @keyframes shine {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        @keyframes slide-in {
+          from {
+            opacity: 0;
+            transform: translateX(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.6s ease-out;
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.5s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+
+        .animate-shine {
+          animation: shine 2s ease-in-out infinite;
+        }
+
+        .animate-slide-in {
+          animation: slide-in 0.4s ease-out forwards;
+          opacity: 0;
+        }
+
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// Section Header Component
+function SectionHeader({ icon, badge, title, gradient, accentColor, onViewAll }) {
+  const colors = {
+    amber: "border-amber-300 hover:border-amber-500 hover:bg-amber-50 text-amber-700",
+    blue: "border-blue-300 hover:border-blue-500 hover:bg-blue-50 text-blue-700",
+    red: "border-red-300 hover:border-red-500 hover:bg-red-50 text-[#FD0002]",
+  };
+
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          {React.cloneElement(icon, { className: `w-6 h-6 md:w-7 md:h-7 ${icon.props.className || ''}` })}
+          <span className={`text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
+            {badge}
+          </span>
+        </div>
+        <h2 className={`text-xl md:text-2xl lg:text-3xl font-black bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
+          {title}
+        </h2>
+      </div>
+      <button
+        onClick={onViewAll}
+        className={`hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-semibold text-sm transition-all duration-300 hover:scale-105 ${colors[accentColor]}`}
+      >
+        View All
+        <ArrowRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+// Mobile Tab Button
+function TabButton({ active, onClick, icon, label, color }) {
+  const colors = {
+    amber: "text-amber-600 data-[active=true]:from-amber-600 data-[active=true]:via-yellow-500 data-[active=true]:to-amber-600",
+    blue: "text-blue-600 data-[active=true]:from-blue-600 data-[active=true]:via-cyan-500 data-[active=true]:to-blue-600",
+    red: "text-[#FD0002] data-[active=true]:from-[#FD0002] data-[active=true]:via-orange-500 data-[active=true]:to-red-600",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      data-active={active}
+      className={`relative flex-1 min-w-[120px] py-3 px-4 text-center font-bold text-xs transition-all whitespace-nowrap overflow-hidden
+        ${active 
+          ? `bg-gradient-to-r ${colors[color]} text-white shadow-lg` 
+          : `bg-transparent ${colors[color]} hover:bg-gray-50`
+        }`}
+    >
+      {active && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine" />
+      )}
+      <div className="relative flex items-center justify-center gap-2">
+        {icon}
+        <span>{label}</span>
+      </div>
+    </button>
+  );
+}
+
+// Horizontal Scroll Component - SAME AS HOMEPAGE
+function HorizontalScroll({ products, title, loading }) {
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const element = scrollRef.current;
+    if (element) {
+      element.addEventListener("scroll", checkScroll);
+      return () => element.removeEventListener("scroll", checkScroll);
+    }
+  }, [products]);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === "left" ? -400 : 400;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex gap-3 md:gap-4 overflow-hidden">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] flex-shrink-0 bg-gray-200 rounded-lg h-80 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <div className="text-center py-12 bg-white rounded-lg">
+        <ShoppingBag className="w-12 h-12 md:w-16 md:h-16 mx-auto text-gray-300 mb-3" />
+        <p className="text-gray-500 text-sm md:text-base">No products found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative group/scroll">
+      {/* Left Arrow - Desktop only */}
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll("left")}
+          className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 lg:w-12 lg:h-12 items-center justify-center rounded-full bg-white border border-gray-200 transition-all duration-300 hover:scale-110 opacity-0 group-hover/scroll:opacity-100 hover:bg-gray-50"
+        >
+          <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700" />
+        </button>
+      )}
+
+      {/* Right Arrow - Desktop only */}
+      {canScrollRight && (
+        <button
+          onClick={() => scroll("right")}
+          className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 lg:w-12 lg:h-12 items-center justify-center rounded-full bg-white border border-gray-200 transition-all duration-300 hover:scale-110 opacity-0 group-hover/scroll:opacity-100 hover:bg-gray-50"
+        >
+          <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700" />
+        </button>
+      )}
+
+      {/* Products Scroll - Hide scrollbar */}
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto gap-3 md:gap-4 pb-2 hide-scrollbar scroll-smooth"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        {products.map((product, index) => (
+          <div
+            key={product._id}
+            className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] flex-shrink-0 animate-slide-in"
+            style={{ animationDelay: `${index * 0.05}s` }}
+          >
+            <ProductCard product={product} />
+          </div>
+        ))}
       </div>
 
-      {/* Floating Elements */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/4 top-1/4 h-64 w-64 animate-pulse rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 h-96 w-96 animate-pulse rounded-full bg-purple-500/10 blur-3xl delay-1000" />
-        <div className="absolute right-1/3 top-1/3 h-72 w-72 animate-pulse rounded-full bg-pink-500/10 blur-3xl delay-500" />
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            opacity: 0;
+            transform: translateX(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .animate-slide-in {
+          animation: slide-in 0.4s ease-out forwards;
+          opacity: 0;
+        }
+
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// SubCategory Row Component for Mobile - WITH HORIZONTAL SCROLL
+function SubCategoryRow({ title, icon, products, loading, onSeeAll }) {
+  const scrollRef = useRef(null);
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{icon}</span>
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        </div>
+        <div className="flex gap-3 overflow-hidden">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="w-[160px] flex-shrink-0 bg-gray-200 rounded-lg h-72 animate-pulse" />
+          ))}
+        </div>
       </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return null;
+  }
+
+  const hasMore = products.length >= 5;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{icon}</span>
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto gap-3 pb-2 hide-scrollbar scroll-smooth"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        {products.map((product, index) => (
+          <div
+            key={product._id}
+            className="w-[160px] flex-shrink-0 animate-slide-in"
+            style={{ animationDelay: `${index * 0.05}s` }}
+          >
+            <ProductCard product={product} />
+          </div>
+        ))}
+        
+        {hasMore && (
+          <button
+            onClick={onSeeAll}
+            className="w-[160px] flex-shrink-0 h-full min-h-[280px] bg-gradient-to-br from-[#FD0002] to-red-600 rounded-lg flex flex-col items-center justify-center gap-3 text-white hover:scale-105 transition-all duration-300 shadow-lg"
+          >
+            <ShoppingBag className="w-12 h-12" />
+            <div className="text-center px-4">
+              <p className="font-bold text-lg">See All</p>
+              <p className="text-sm opacity-90">{title}</p>
+            </div>
+            <ArrowRight className="w-6 h-6" />
+          </button>
+        )}
+      </div>
+
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            opacity: 0;
+            transform: translateX(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .animate-slide-in {
+          animation: slide-in 0.4s ease-out forwards;
+          opacity: 0;
+        }
+
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }

@@ -9,6 +9,17 @@ const cartRoutes = require('./routes/cart');
 const wishlistRoutes = require('./routes/wishlist');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/adminRoutes');
+const adminProductRoutes = require('./routes/adminProductRoutes');
+const adminBannerRoutes = require('./routes/adminBannerRoutes');
+const productRoutes = require('./routes/productRoutes');
+const bannerRoutes = require('./routes/bannerRoutes');
+const { router: notificationSSERouter } = require('./routes/notificationSSE');
+const orderRoutes = require('./routes/orderRoutes');
+const addressRoutes = require('./routes/addressRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const adminOrderRoutes = require('./routes/adminOrderRoutes');
+const couponRoutes = require('./routes/couponRoutes');
+
 const app = express();
 
 app.use(helmet());
@@ -32,6 +43,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/products', adminProductRoutes);
+app.use('/api/admin/banners', adminBannerRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/banners', bannerRoutes);
+app.use('/api/notifications', notificationSSERouter);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/order', orderRoutes);
+app.use('/api/address', addressRoutes);
+app.use('/api/admin/orders', adminOrderRoutes);
+app.use('/api/coupon', couponRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

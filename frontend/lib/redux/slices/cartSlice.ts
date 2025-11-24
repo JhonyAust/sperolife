@@ -55,7 +55,8 @@ export const fetchCartItems = createAsyncThunk(
   async (userId: string, { rejectWithValue }) => {
     try {
       const { data } = await api.get(`/cart/${userId}`);
-      return data.items || [];
+      // ✅ FIX: Backend returns data.cart.items, not data.items
+      return data.cart?.items || [];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch cart");
     }
@@ -89,7 +90,8 @@ export const addToCartDB = createAsyncThunk(
         size,
         color,
       });
-      return data.cart.items;
+      // ✅ FIX: Return cart.items
+      return data.cart?.items || [];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to add to cart");
     }
@@ -105,7 +107,8 @@ export const updateCartItemDB = createAsyncThunk(
   ) => {
     try {
       const { data } = await api.put(`/cart/${itemId}`, { userId, quantity });
-      return data.cart.items;
+      // ✅ FIX: Return cart.items
+      return data.cart?.items || [];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to update cart");
     }
@@ -118,7 +121,8 @@ export const removeFromCartDB = createAsyncThunk(
   async ({ userId, itemId }: { userId: string; itemId: string }, { rejectWithValue }) => {
     try {
       const { data } = await api.delete(`/cart/${itemId}`, { data: { userId } });
-      return data.cart.items;
+      // ✅ FIX: Return cart.items
+      return data.cart?.items || [];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to remove from cart");
     }
@@ -147,7 +151,8 @@ export const mergeGuestCart = createAsyncThunk(
   ) => {
     try {
       const { data } = await api.post("/cart/merge", { userId, items });
-      return data.cart.items;
+      // ✅ FIX: Backend returns data.cart.items, not data.items
+      return data.cart?.items || [];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to merge cart");
     }
@@ -162,55 +167,82 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    // Guest cart actions (localStorage)
-    addToCart: (state, action: PayloadAction<CartItem>) => {
-      const existingItem = state.items.find(
-        (item) =>
-          item.product === action.payload.product &&
-          item.size === action.payload.size &&
-          item.color === action.payload.color
-      );
+ addToCart: (state, action: PayloadAction<CartItem>) => {
+    // 🔥 FIX: Find existing item by matching product ID and size
+    const existingItem = state.items.find(
+      (item) =>
+        item.product === action.payload.product &&
+        item.size === action.payload.size
+    );
 
-      if (existingItem) {
-        existingItem.quantity += action.payload.quantity;
+    if (existingItem) {
+      // 🔥 FIX: Check stock limit before increasing quantity
+      const maxQuantity = action.payload.stock || 999;
+      const newQuantity = existingItem.quantity + action.payload.quantity;
+      
+      if (newQuantity <= maxQuantity) {
+        existingItem.quantity = newQuantity;
       } else {
-        state.items.push(action.payload);
+        // Don't add more than available stock
+        existingItem.quantity = maxQuantity;
+        console.warn(`Cannot add more. Only ${maxQuantity} items available in stock.`);
       }
+    } else {
+      // Add new item to cart
+      state.items.push(action.payload);
+    }
 
-      state.total = calculateTotal(state.items);
-      saveCartToStorage(state.items);
-    },
+    state.total = calculateTotal(state.items);
+    saveCartToStorage(state.items);
+  },
 
-    removeFromCart: (state, action: PayloadAction<string>) => {
+  removeFromCart: (state, action: PayloadAction<string>) => {
+    // 🔥 FIX: Filter out the specific item by ID
+    const itemToRemove = state.items.find(item => item._id === action.payload);
+    
+    if (itemToRemove) {
+      console.log("Removing item:", itemToRemove.name, "ID:", action.payload);
       state.items = state.items.filter((item) => item._id !== action.payload);
       state.total = calculateTotal(state.items);
       saveCartToStorage(state.items);
-    },
-
-    updateQuantity: (
-      state,
-      action: PayloadAction<{ id: string; quantity: number }>
-    ) => {
-      const item = state.items.find((item) => item._id === action.payload.id);
-      if (item) {
-        item.quantity = action.payload.quantity;
-        state.total = calculateTotal(state.items);
-        saveCartToStorage(state.items);
-      }
-    },
-
-    clearCart: (state) => {
-      state.items = [];
-      state.total = 0;
-      saveCartToStorage([]);
-    },
-
-    setCart: (state, action: PayloadAction<CartItem[]>) => {
-      state.items = action.payload;
-      state.total = calculateTotal(action.payload);
-      saveCartToStorage(action.payload);
-    },
+    } else {
+      console.warn("Item not found for removal:", action.payload);
+    }
   },
+
+  updateQuantity: (
+    state,
+    action: PayloadAction<{ id: string; quantity: number }>
+  ) => {
+    // 🔥 FIX: Find and update the specific item
+    const item = state.items.find((item) => item._id === action.payload.id);
+    
+    if (item) {
+      console.log("Updating quantity for:", item.name, "from", item.quantity, "to", action.payload.quantity);
+      
+      // Ensure quantity doesn't exceed stock
+      const newQuantity = Math.min(action.payload.quantity, item.stock);
+      item.quantity = Math.max(1, newQuantity); // At least 1
+      
+      state.total = calculateTotal(state.items);
+      saveCartToStorage(state.items);
+    } else {
+      console.warn("Item not found for quantity update:", action.payload.id);
+    }
+  },
+
+  clearCart: (state) => {
+    state.items = [];
+    state.total = 0;
+    saveCartToStorage([]);
+  },
+
+  setCart: (state, action: PayloadAction<CartItem[]>) => {
+    state.items = action.payload;
+    state.total = calculateTotal(action.payload);
+    saveCartToStorage(action.payload);
+  },
+},
   extraReducers: (builder) => {
     // Fetch Cart
     builder

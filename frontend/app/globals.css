@@ -1,26 +1,121 @@
 @import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+    /* Brand Color */
+    --color-brand: #FE0002;
+    --color-brand-light: #FF3335;
+    --color-brand-dark: #CC0001;
+    /* Brand Color Shades */
+    --color-brand-50: #FEE7E7;
+    --color-brand-100: #FECCCC;
+    --color-brand-200: #FD9999;
+    --color-brand-300: #FD6666;
+    --color-brand-400: #FE3335;
+    --color-brand-500: #FE0002;
+    --color-brand-600: #CC0001;
+    --color-brand-700: #990001;
+    --color-brand-800: #660001;
+    --color-brand-900: #330000;
+    /* Pink shades */
+    --color-pink-600: #db2777;
+    --color-pink-700: #be185d;
+    --color-pink-800: #9f1239;
+    /* Purple shades */
+    --color-purple-600: #9333ea;
+    --color-purple-700: #7e22ce;
+    --color-purple-800: #6b21a8;
+    /* Orange shades */
+    --color-orange-600: #ea580c;
+    --color-orange-700: #c2410c;
+    --color-orange-800: #9a3412;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+     :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* Global Gradient Utilities */
+
+@layer utilities {
+    /* Your Specific Text Gradient - Gray to Brand to Gray */
+    .text-gradient-heading,
+    .heading-gradient {
+        background: linear-gradient(to right, var(--color-brand-500), var(--color-pink-700));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    /* With animation option */
+    .text-gradient-heading-animated {
+        background: linear-gradient(to right, var(--color-brand-500), var(--color-pink-700));
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer 3s linear infinite;
+    }
+    @keyframes shimmer {
+        to {
+            background-position: 200% center;
+        }
+    }
+    /* Primary Gradient - Brand to Pink (for buttons/sections) */
+    .gradient-primary,
+    .btn-primary {
+        background: linear-gradient(to right, var(--color-brand-500), var(--color-pink-700));
+        transition: background 0.3s ease;
+    }
+    .gradient-primary:hover,
+    .btn-primary:hover {
+        background: linear-gradient(to right, var(--color-brand-600), var(--color-pink-800));
+    }
+    /* Secondary Gradient - Brand to Purple */
+    .gradient-secondary,
+    .btn-secondary {
+        background: linear-gradient(to right, var(--color-brand-500), var(--color-purple-700));
+        transition: background 0.3s ease;
+    }
+    .gradient-secondary:hover,
+    .btn-secondary:hover {
+        background: linear-gradient(to right, var(--color-brand-600), var(--color-purple-800));
+    }
+    /* Text Gradient - Brand to Pink */
+    .text-gradient-primary {
+        background: linear-gradient(to right, var(--color-brand-500), var(--color-pink-700));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    /* Text Gradient - Brand to Purple */
+    .text-gradient-secondary {
+        background: linear-gradient(to right, var(--color-brand-500), var(--color-purple-700));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    /* Hero Section Gradients */
+    .gradient-hero {
+        background: linear-gradient(135deg, var(--color-brand-500), var(--color-pink-700));
+    }
+    .section-bg-subtle {
+        background: linear-gradient(180deg, transparent, var(--color-brand-50) 50%, transparent);
+    }
 }

@@ -92,6 +92,19 @@ export const mergeGuestWishlist = createAsyncThunk(
     }
   }
 );
+export const clearWishlistAsync = createAsyncThunk(
+  "wishlist/clear",
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const { data } = await api.delete(`/wishlist/${userId}`);
+      return data.products || [];
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to clear wishlist"
+      );
+    }
+  }
+);
 
 // ============================================================================
 // SLICE
@@ -127,12 +140,21 @@ const wishlistSlice = createSlice({
       const productIds = action.payload.map((item) => item._id);
       saveWishlistToStorage(productIds);
     },
+
+    // Initialize guest wishlist from localStorage
+    initializeGuestWishlist: (state, action: PayloadAction<Product[]>) => {
+      const savedIds = loadWishlistFromStorage();
+      state.items = action.payload.filter((product) => 
+        savedIds.includes(product._id)
+      );
+    },
   },
   extraReducers: (builder) => {
     // Fetch Wishlist
     builder
       .addCase(fetchWishlist.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchWishlist.fulfilled, (state, action) => {
         state.loading = false;
@@ -146,19 +168,50 @@ const wishlistSlice = createSlice({
 
     // Toggle Wishlist
     builder
+      .addCase(toggleWishlistItem.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(toggleWishlistItem.fulfilled, (state, action) => {
+        state.loading = false;
         state.items = action.payload;
+        state.error = null;
+      })
+      .addCase(toggleWishlistItem.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
 
     // Merge Wishlist
     builder
+      .addCase(mergeGuestWishlist.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(mergeGuestWishlist.fulfilled, (state, action) => {
+        state.loading = false;
         state.items = action.payload;
-        // Clear localStorage after merge
+        state.error = null;
+        // Clear localStorage after successful merge
         if (typeof window !== "undefined") {
           localStorage.removeItem(WISHLIST_STORAGE_KEY);
         }
+      })
+      .addCase(mergeGuestWishlist.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
+      builder
+  .addCase(clearWishlistAsync.pending, (state) => {
+    state.loading = true;
+  })
+  .addCase(clearWishlistAsync.fulfilled, (state, action) => {
+    state.loading = false;
+    state.items = [];
+    state.error = null;
+  })
+  .addCase(clearWishlistAsync.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload as string;
+  });
   },
 });
 
@@ -167,9 +220,7 @@ export const {
   removeFromWishlist,
   clearWishlist,
   setWishlist,
+  initializeGuestWishlist,
 } = wishlistSlice.actions;
 
 export default wishlistSlice.reducer;
-
-
-

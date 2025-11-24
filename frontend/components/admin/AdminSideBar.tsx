@@ -13,6 +13,7 @@ import {
   X,
   ChevronLeft,
   Sparkles,
+  Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,10 +47,16 @@ const menuItems = [
     href: "/admin/admin-portal-slrhs-25/customers",
     gradient: "from-green-500 to-emerald-500",
   },
+   {
+    title: "Banners",
+    icon: Image, 
+    href: "/admin/admin-portal-slrhs-25/banners",
+    gradient: "from-pink-500 to-rose-500",
+  },
   {
     title: "Categories",
     icon: Tags,
-    href: "/admin/admin-portal-slrhs-25/categories",
+    href: "/admin/admin-portal-slrhs-25/coupons",
     gradient: "from-yellow-500 to-orange-500",
   },
   {

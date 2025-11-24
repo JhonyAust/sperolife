@@ -1,4 +1,4 @@
-// frontend/components/layout/Header.tsx
+// components/layout/Header.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -41,11 +41,13 @@ import { Badge } from "@/components/ui/badge";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import { logoutUser } from "@/lib/redux/slices/authSlice";
 import AuthModal from "../auth/AuthModel";
+import CartSlider from "../cart/CartSlider";
+
 const categories = [
-  { name: "Men", href: "/products?gender=men", icon: TrendingUp },
-  { name: "Women", href: "/products?gender=women", icon: Sparkles },
-  { name: "Kids", href: "/products?gender=kids", icon: Gift },
-  { name: "Sale", href: "/products?sale=true", icon: Zap, badge: "Hot" },
+  { name: "Men", href: "/products?category=men", icon: TrendingUp },
+  { name: "Women", href: "/products?category=women", icon: Sparkles },
+  { name: "Kids", href: "/products?category=kids", icon: Gift },
+  { name: "Sale", href: "/products?onSale=true", icon: Zap, badge: "Hot" },
 ];
 
 export default function Header() {
@@ -62,6 +64,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [cartSliderOpen, setCartSliderOpen] = useState(false);
 
   // Handle scroll effect
   useEffect(() => {
@@ -162,7 +165,7 @@ export default function Header() {
                   size="icon"
                   className="relative hover:bg-red-50 hover:text-red-600 transition-all duration-300 group"
                 >
-                  <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <Heart className="w-5 h-5 text-gray-600 group-hover:scale-110 transition-transform" />
                   {wishlistItems.length > 0 && (
                     <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-600 hover:bg-red-700 animate-pulse">
                       {wishlistItems.length}
@@ -171,21 +174,20 @@ export default function Header() {
                 </Button>
               </Link>
 
-              {/* Cart */}
-              <Link href="/cart">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative hover:bg-red-50 hover:text-red-600 transition-all duration-300 group"
-                >
-                  <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  {cartItems.length > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-gradient-to-r from-red-600 to-black hover:from-red-700 hover:to-gray-900 animate-bounce">
-                      {cartItems.length}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
+              {/* Cart - Opens Slider */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCartSliderOpen(true)}
+                className="relative hover:bg-red-50 hover:text-red-600 transition-all duration-300 group"
+              >
+                <ShoppingCart className="w-5 h-5 text-gray-600 group-hover:scale-110 transition-transform" />
+                {cartItems.length > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-gradient-to-r from-red-600 to-black hover:from-red-700 hover:to-gray-900 animate-bounce">
+                    {cartItems.length}
+                  </Badge>
+                )}
+              </Button>
 
               {/* User Menu */}
               {isAuthenticated && user ? (
@@ -221,7 +223,7 @@ export default function Header() {
                       Account Settings
                     </DropdownMenuItem>
                     {user.role === "admin" && (
-                      <DropdownMenuItem onClick={() => router.push("/admin")}>
+                      <DropdownMenuItem onClick={() => router.push("/admin/admin-portal-slrhs-25/orders")}>
                         <Settings className="mr-2 h-4 w-4 text-red-600" />
                         Admin Panel
                       </DropdownMenuItem>
@@ -277,16 +279,19 @@ export default function Header() {
               >
                 <Search className="w-5 h-5" />
               </Button>
-              <Link href="/cart">
-                <Button variant="ghost" size="icon" className="relative hover:bg-red-50">
-                  <ShoppingCart className="w-5 h-5" />
-                  {cartItems.length > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] bg-red-600">
-                      {cartItems.length}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setCartSliderOpen(true)}
+                className="relative hover:bg-red-50"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {cartItems.length > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] bg-red-600">
+                    {cartItems.length}
+                  </Badge>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -331,7 +336,7 @@ export default function Header() {
                       {category.badge}
                     </Badge>
                   )}
-                  <div className="absolute -bottom-3 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-700scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                  <div className="absolute -bottom-3 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 to-pink-700 scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
                 </Link>
               ))}
             </nav>
@@ -448,8 +453,11 @@ export default function Header() {
         </SheetContent>
       </Sheet>
 
-      {/* Auth Modal - Add your AuthModal component here */}
+      {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+
+      {/* Cart Slider */}
+      <CartSlider isOpen={cartSliderOpen} onClose={() => setCartSliderOpen(false)} />
 
       <style jsx global>{`
         @keyframes shimmer {

@@ -29,8 +29,8 @@ import {
   loginWithGoogle, 
   forgotPassword 
 } from "@/lib/redux/slices/authSlice";
-import { setCart, mergeGuestCart } from "@/lib/redux/slices/cartSlice";
-import { setWishlist, mergeGuestWishlist } from "@/lib/redux/slices/wishlistSlice";
+import { setCart, mergeGuestCart, fetchCartItems } from "@/lib/redux/slices/cartSlice"; // ✅ Add fetchCartItems
+import { setWishlist, mergeGuestWishlist, fetchWishlist } from "@/lib/redux/slices/wishlistSlice"; // ✅ Add fetchWishlist
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -104,28 +104,42 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     router.push("/");
   };
 
-  // Merge guest data after login
-  const mergeGuestData = async (userId: string) => {
-    try {
-      // Get guest cart from localStorage
-      const guestCart = localStorage.getItem("guestCart");
-      if (guestCart) {
-        const cartItems = JSON.parse(guestCart);
-        await dispatch(mergeGuestCart({ userId, items: cartItems }));
-        localStorage.removeItem("guestCart");
-      }
-
-      // Get guest wishlist from localStorage
-      const guestWishlist = localStorage.getItem("guestWishlist");
-      if (guestWishlist) {
-        const wishlistItems = JSON.parse(guestWishlist);
-        await dispatch(mergeGuestWishlist({ userId, items: wishlistItems }));
-        localStorage.removeItem("guestWishlist");
-      }
-    } catch (error) {
-      console.error("Error merging guest data:", error);
+ // Merge guest data after login
+const mergeGuestData = async (userId: string) => {
+  try {
+    // Get guest cart from localStorage
+    const guestCart = localStorage.getItem("guestCart");
+    if (guestCart) {
+      const cartItems = JSON.parse(guestCart);
+      // ✅ Await the merge and then fetch updated cart
+      await dispatch(mergeGuestCart({ userId, items: cartItems })).unwrap();
+      localStorage.removeItem("guestCart");
+      // ✅ Fetch the merged cart from DB
+      await dispatch(fetchCartItems(userId)).unwrap();
+    } else if (isAuthenticated) {
+      // ✅ If no guest cart, just fetch user's cart from DB
+      await dispatch(fetchCartItems(userId)).unwrap();
     }
-  };
+
+    // Get guest wishlist from localStorage
+    const guestWishlist = localStorage.getItem("guestWishlist");
+    if (guestWishlist) {
+      const productIds = JSON.parse(guestWishlist);
+      await dispatch(mergeGuestWishlist({ 
+        userId, 
+        items: productIds
+      })).unwrap();
+      localStorage.removeItem("guestWishlist");
+      // ✅ Fetch the merged wishlist from DB
+      await dispatch(fetchWishlist(userId)).unwrap();
+    } else if (isAuthenticated) {
+      // ✅ If no guest wishlist, just fetch user's wishlist from DB
+      await dispatch(fetchWishlist(userId)).unwrap();
+    }
+  } catch (error) {
+    console.error("Error merging guest data:", error);
+  }
+};
 
   // Handle login
   const handleLogin = async (e: React.FormEvent) => {
