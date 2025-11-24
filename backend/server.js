@@ -63,6 +63,15 @@ app.use('/api/address', addressRoutes);
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/coupon', couponRoutes);
 
+app.get("/api/health", (req, res) => {
+    res.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        userAgent: req.headers['user-agent'],
+        origin: req.headers.origin,
+    });
+});
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(err.status || 500).json({
