@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner"
 import { Providers } from "./providers";
 import FrontendHeader from "@/components/layout/FrontendHeader";
+import FrontendFooter from "@/components/layout/FrontendFooter"; 
 import { OptimizedDataLoader } from "@/components/Provider/OptimizedDataLoader";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
             <FrontendHeader />
             <main>{children}</main>
             <Toaster position="top-center" richColors />
+            <FrontendFooter/>
           </OptimizedDataLoader> {/* 🔥 ADD THIS */}
         </Providers>
       </body>
