@@ -115,7 +115,7 @@ export default function ModernHomePage() {
   return (
     <div className="min-h-screen bg-[#EAEDED]">
       {/* Hero Banner Section */}
-      <section className="relative h-[350px] md:h-[500px] lg:h-[600px] overflow-hidden">
+      <section className="relative h-[250px] md:h-[600px]  overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(253,0,2,0.2),transparent_50%)] animate-pulse-slow" />
         </div>
@@ -240,31 +240,31 @@ export default function ModernHomePage() {
       </section>
 
       {/* Mobile Tabs Section */}
-      <section className="md:hidden sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="flex overflow-x-auto hide-scrollbar">
-          <TabButton
-            active={activeTab === "bestseller"}
-            onClick={() => setActiveTab("bestseller")}
-            icon={<Trophy className="w-4 h-4" />}
-            label="Best Sellers"
-            color="amber"
-          />
-          <TabButton
-            active={activeTab === "new"}
-            onClick={() => setActiveTab("new")}
-            icon={<Clock className="w-4 h-4" />}
-            label="New Arrivals"
-            color="blue"
-          />
-          <TabButton
-            active={activeTab === "discount"}
-            onClick={() => setActiveTab("discount")}
-            icon={<Flame className="w-4 h-4" />}
-            label="Hot Deals"
-            color="red"
-          />
-        </div>
-      </section>
+      <section className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg">
+  <div className="flex overflow-x-auto hide-scrollbar">
+    <TabButton
+      active={activeTab === "new"}
+      onClick={() => setActiveTab("new")}
+      icon={<Clock className="w-4 h-4" />}
+      label="New Arrival"
+      color="blue"
+    />
+    <TabButton
+      active={activeTab === "bestseller"}
+      onClick={() => setActiveTab("bestseller")}
+      icon={<Trophy className="w-4 h-4" />}
+      label="Best Sellers"
+      color="amber"
+    />
+    <TabButton
+      active={activeTab === "discount"}
+      onClick={() => setActiveTab("discount")}
+      icon={<Flame className="w-4 h-4" />}
+      label="Hot Deals"
+      color="red"
+    />
+  </div>
+</section>
 
       {/* Mobile Tab Content - WITH SUBCATEGORIES */}
       <section className="md:hidden py-4 bg-white">
@@ -538,20 +538,25 @@ function SectionHeader({ icon, badge, title, gradient, accentColor, onViewAll })
 // Mobile Tab Button
 function TabButton({ active, onClick, icon, label, color }) {
   const colors = {
-    amber: "text-amber-600 data-[active=true]:from-amber-600 data-[active=true]:via-yellow-500 data-[active=true]:to-amber-600",
-    blue: "text-blue-600 data-[active=true]:from-blue-600 data-[active=true]:via-cyan-500 data-[active=true]:to-blue-600",
-    red: "text-[#FD0002] data-[active=true]:from-[#FD0002] data-[active=true]:via-orange-500 data-[active=true]:to-red-600",
+    amber: {
+      inactive: "text-amber-400 hover:bg-slate-700 hover:text-white",
+      active: "bg-gradient-to-r from-amber-600 to-orange-600 text-white"
+    },
+    blue: {
+      inactive: "text-blue-400 hover:bg-slate-700 hover:text-white",
+      active: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+    },
+    red: {
+      inactive: "text-rose-400 hover:bg-slate-700 hover:text-white",
+      active: "bg-gradient-to-r from-rose-600 to-pink-600 text-white"
+    }
   };
 
   return (
     <button
       onClick={onClick}
-      data-active={active}
-      className={`relative flex-1 min-w-[120px] py-3 px-4 text-center font-bold text-xs transition-all whitespace-nowrap overflow-hidden
-        ${active 
-          ? `bg-gradient-to-r ${colors[color]} text-white shadow-lg` 
-          : `bg-transparent ${colors[color]} hover:bg-gray-50`
-        }`}
+      className={`relative flex-1 min-w-[120px] py-3 px-4 text-center font-semibold text-sm transition-all whitespace-nowrap overflow-hidden
+        ${active ? colors[color].active : colors[color].inactive}`}
     >
       {active && (
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine" />

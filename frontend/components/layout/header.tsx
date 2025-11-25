@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { 
   Search, 
@@ -18,6 +19,7 @@ import {
   Gift,
   LogOut,
   Settings,
+  Shirt, Layers, Footprints,ShoppingBag,
   Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,9 +46,9 @@ import AuthModal from "../auth/AuthModel";
 import CartSlider from "../cart/CartSlider";
 
 const categories = [
-  { name: "Men", href: "/products?category=men", icon: TrendingUp },
-  { name: "Women", href: "/products?category=women", icon: Sparkles },
-  { name: "Kids", href: "/products?category=kids", icon: Gift },
+  { name: "Shirts", href: "/products?subCategory=Shirts", icon: Sparkles },
+  { name: "Shackets", href: "/products?subCategory=Shacket", icon: ShoppingBag },
+  { name: "Sneakers", href: "/products?subCategory=Sneakers", icon: Footprints },
   { name: "Sale", href: "/products?onSale=true", icon: Zap, badge: "Hot" },
 ];
 
@@ -94,7 +96,7 @@ export default function Header() {
   return (
     <>
       {/* Top Banner - Ultra thin with animation */}
-      <div className="bg-gradient-to-r from-red-600 via-black to-red-600 text-white text-center py-2 text-xs sm:text-sm font-semibold relative overflow-hidden">
+      <div className="btn-primary text-white text-center py-2 text-xs sm:text-sm font-semibold relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
         <div className="relative flex items-center justify-center gap-2">
           <Zap className="w-4 h-4 animate-pulse" />
@@ -115,20 +117,15 @@ export default function Header() {
           {/* Desktop Header */}
           <div className="hidden lg:flex items-center justify-between h-20">
             {/* Logo */}
-            <Link href="/" className="group flex items-center gap-2 relative">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#ED1D26] to-[#F7D000] rounded-lg blur-lg opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="relative bg-gradient-to-br from-[#ED1D26] via-red-700 to-pink-700 p-3 rounded-lg transform group-hover:scale-110 transition-all duration-500">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black bg-gradient-to-r from-red-600 via-pink-700 to-red-600 bg-clip-text text-transparent">
-                  SPEROLIFE
-                </span>
-                <span className="text-[10px] text-gray-500 font-medium tracking-widest -mt-1">
-                  PREMIUM LIFESTYLE
-                </span>
+            <Link href="/" className="group relative">
+              <div className="relative w-40 h-20">
+                <Image
+                  src="/logo.png"
+                  alt="SPEROLIFE Logo"
+                  fill
+                  className="object-contain transition-transform duration-500 group-hover:scale-110"
+                  priority
+                />
               </div>
             </Link>
 
@@ -137,18 +134,20 @@ export default function Header() {
               <form onSubmit={handleSearch} className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-700 rounded-full blur-md opacity-0 group-focus-within:opacity-30 transition-opacity duration-500"></div>
                 <div className="relative flex items-center">
-                  <Search className="absolute left-4 w-5 h-5 text-gray-400 group-focus-within:text-red-600 transition-colors duration-300" />
+                  <Search className="absolute left-4 w-5 h-5 text-gray-500 group-focus-within:text-red-600 transition-colors duration-300" />
                   <Input
                     type="search"
                     placeholder="Search for products, brands, and more..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 h-12 rounded-full border-2 border-gray-200 focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 bg-gray-50 focus:bg-white"
+                    className="w-full pl-12 pr-4 h-12 rounded-full text-gray-600 border-1 border-gray-400 
+                      focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0
+                      focus-visible:outline-none transition-all duration-300 bg-gray-50 focus-visible:bg-white"
                   />
                   <Button
                     type="submit"
                     size="icon"
-                    className="absolute right-1 h-10 w-10 rounded-full bg-gradient-to-r from-red-600 to-pink-700 hover:from-red-700 hover:to-gray-900 shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="absolute right-1 h-10 w-10 rounded-full btn-primary"
                   >
                     <Search className="w-4 h-4" />
                   </Button>
@@ -256,17 +255,20 @@ export default function Header() {
               onClick={() => setMobileMenuOpen(true)}
               className="hover:bg-red-50"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6 text-brand" />
             </Button>
 
             {/* Mobile Logo */}
-            <Link href="/" className="flex items-center gap-1">
-              <div className="bg-gradient-to-br from-red-600 to-pink-700 p-2 rounded-lg">
-                <Sparkles className="w-5 h-5 text-white" />
+            <Link href="/" className="flex items-center">
+              <div className="relative w-32 h-16">
+                <Image
+                  src="/logo.png"
+                  alt="SPEROLIFE Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
-              <span className="text-lg font-black bg-gradient-to-r from-red-600 to-pink-700 bg-clip-text text-transparent">
-                SPEROLIFE
-              </span>
             </Link>
 
             {/* Mobile Actions */}
@@ -277,7 +279,7 @@ export default function Header() {
                 onClick={() => setShowMobileSearch(!showMobileSearch)}
                 className="hover:bg-red-50"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-5 h-5 text-brand" />
               </Button>
               <Button 
                 variant="ghost" 
@@ -285,7 +287,7 @@ export default function Header() {
                 onClick={() => setCartSliderOpen(true)}
                 className="relative hover:bg-red-50"
               >
-                <ShoppingCart className="w-5 h-5" />
+                <ShoppingCart className="w-5 h-5 text-gray-600" />
                 {cartItems.length > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] bg-red-600">
                     {cartItems.length}
@@ -305,12 +307,12 @@ export default function Header() {
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-20 h-11 rounded-full border-2 border-gray-200 focus:border-red-600"
+                  className="w-full pl-10 pr-20 h-11 rounded-full border-1 border-gray-400 text-gray-600 focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 rounded-full bg-gradient-to-r from-red-600 to-pink-700"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 rounded-full btn-primary"
                 >
                   Search
                 </Button>
@@ -348,13 +350,15 @@ export default function Header() {
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side="left" className="w-[300px] p-0">
           <SheetHeader className="p-6 border-b border-gray-100 bg-gradient-to-br from-red-50 to-white">
-            <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-br from-red-600 to-black p-2 rounded-lg">
-                <Sparkles className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center">
+              <div className="relative w-40 h-20">
+                <Image
+                  src="/logo.png"
+                  alt="SPEROLIFE Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
-              <SheetTitle className="text-xl font-black bg-gradient-to-r from-red-600 to-pink-700 bg-clip-text text-transparent">
-                SPEROLIFE
-              </SheetTitle>
             </div>
           </SheetHeader>
 

@@ -87,9 +87,21 @@ export default function ModernCheckout() {
   }, 0);
 
   // Check if cart has any discounted products
-  const hasDiscountedProducts = cartItems.some(item => 
-    item.salePrice && item.salePrice < item.price
-  );
+// Check if cart has any discounted products
+  const hasDiscountedProducts = cartItems.some(item => {
+    const salePrice = item.salePrice || item.sale_price;
+    const regularPrice = item.price || item.regularPrice || item.regular_price;
+    console.log('🔍 Checking item:', {
+      name: item.name || item.title,
+      salePrice,
+      regularPrice,
+      hasDiscount: salePrice && regularPrice && salePrice < regularPrice
+    });
+    return salePrice && regularPrice && salePrice < regularPrice;
+  });
+
+  console.log('📊 Has Discounted Products:', hasDiscountedProducts);
+  console.log('👤 Is Authenticated:', isAuthenticated);
 
   // ✅ FIXED: Calculate discount based on discount type
   const calculateCouponDiscount = () => {

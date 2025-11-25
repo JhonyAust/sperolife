@@ -334,6 +334,22 @@ exports.validateAndApplyCoupon = async(req, res) => {
             });
         }
 
+        const hasDiscountedProducts = cartItems.some(item => {
+            const salePrice = item.salePrice || item.sale_price;
+            const regularPrice = item.price || item.regularPrice || item.regular_price;
+            return salePrice &&
+                regularPrice &&
+                Number(salePrice) > 0 &&
+                Number(salePrice) < Number(regularPrice);
+        });
+
+        if (hasDiscountedProducts) {
+            return res.status(400).json({
+                success: false,
+                message: 'Coupon cannot be applied to products that already have discounts',
+            });
+        }
+
         // Validate coupon using static method
         const coupon = await Coupon.validateCoupon(
             couponCode,
