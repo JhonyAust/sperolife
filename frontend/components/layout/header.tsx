@@ -20,7 +20,12 @@ import {
   LogOut,
   Settings,
   Shirt, Layers, Footprints,ShoppingBag,
-  Package
+  Package,
+  Bell,
+  Star,
+  Tag,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import { logoutUser } from "@/lib/redux/slices/authSlice";
+import { getActiveAnnouncements } from "@/lib/redux/slices/announcementSlice";
 import AuthModal from "../auth/AuthModel";
 import CartSlider from "../cart/CartSlider";
 
@@ -52,6 +58,17 @@ const categories = [
   { name: "Sale", href: "/products?onSale=true", icon: Zap, badge: "Hot" },
 ];
 
+// Icon mapping for announcements
+const iconMap: { [key: string]: any } = {
+  zap: Zap,
+  sparkles: Sparkles,
+  gift: Gift,
+  star: Star,
+  heart: Heart,
+  bell: Bell,
+  tag: Tag,
+};
+
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
@@ -60,6 +77,7 @@ export default function Header() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const { items: cartItems } = useAppSelector((state) => state.cart);
   const { items: wishlistItems } = useAppSelector((state) => state.wishlist);
+  const { announcements } = useAppSelector((state) => state.announcement);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,6 +85,25 @@ export default function Header() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [cartSliderOpen, setCartSliderOpen] = useState(false);
+  const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0);
+
+  // Fetch announcements on mount
+  useEffect(() => {
+    dispatch(getActiveAnnouncements());
+  }, [dispatch]);
+
+  // Auto-rotate announcements
+  useEffect(() => {
+    if (announcements.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentAnnouncementIndex((prev) => 
+          prev === announcements.length - 1 ? 0 : prev + 1
+        );
+      }, 5000); // Change every 5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [announcements.length]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -93,17 +130,83 @@ export default function Header() {
     router.push("/");
   };
 
+  // Handle announcement navigation
+  const handlePrevAnnouncement = () => {
+    setCurrentAnnouncementIndex((prev) => 
+      prev === 0 ? announcements.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextAnnouncement = () => {
+    setCurrentAnnouncementIndex((prev) => 
+      prev === announcements.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const currentAnnouncement = announcements[currentAnnouncementIndex];
+  const AnnouncementIcon = currentAnnouncement?.icon ? iconMap[currentAnnouncement.icon] : Zap;
+
   return (
     <>
-      {/* Top Banner - Ultra thin with animation */}
-      <div className="btn-primary text-white text-center py-2 text-xs sm:text-sm font-semibold relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-        <div className="relative flex items-center justify-center gap-2">
-          <Zap className="w-4 h-4 animate-pulse" />
-          <span>FREE SHIPPING on orders over $50 • Use code: SPERO2024</span>
-          <Sparkles className="w-4 h-4 animate-pulse" />
+      {/* Top Banner Announcement - Dynamic */}
+      {announcements.length > 0 && currentAnnouncement && (
+        <div 
+          className="relative text-white text-center btn-primary py-2 text-xs sm:text-sm font-semibold overflow-hidden"
+          //style={{ backgroundColor: currentAnnouncement.backgroundColor || '#000000' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+          <div className="relative flex items-center justify-center gap-2 px-12">
+            {AnnouncementIcon && <AnnouncementIcon className="w-4 h-4 animate-pulse" />}
+            {currentAnnouncement.link ? (
+              <Link 
+                href={currentAnnouncement.link}
+                className="hover:underline"
+                style={{ color: currentAnnouncement.textColor || '#ffffff' }}
+              >
+                {currentAnnouncement.text}
+              </Link>
+            ) : (
+              <span style={{ color: currentAnnouncement.textColor || '#ffffff' }}>
+                {currentAnnouncement.text}
+              </span>
+            )}
+            {AnnouncementIcon && <AnnouncementIcon className="w-4 h-4 animate-pulse" />}
+          </div>
+
+          {/* Navigation arrows for multiple announcements */}
+          {/* {announcements.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevAnnouncement}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-1 hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Previous announcement"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleNextAnnouncement}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Next announcement"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              
+              <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-1">
+                {announcements.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-1 h-1 rounded-full transition-all ${
+                      index === currentAnnouncementIndex 
+                        ? 'bg-white w-3' 
+                        : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )} */}
         </div>
-      </div>
+      )}
 
       {/* Main Header */}
       <header
@@ -182,7 +285,7 @@ export default function Header() {
               >
                 <ShoppingCart className="w-5 h-5 text-gray-600 group-hover:scale-110 transition-transform" />
                 {cartItems.length > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-gradient-to-r from-red-600 to-black hover:from-red-700 hover:to-gray-900 animate-bounce">
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center btn-primary animate-bounce">
                     {cartItems.length}
                   </Badge>
                 )}
@@ -236,12 +339,12 @@ export default function Header() {
                 </DropdownMenu>
               ) : (
                 <Button
-                  onClick={() => setShowAuthModal(true)}
-                  className="bg-gradient-to-r from-red-600 to-pink-700 hover:from-red-700 hover:to-gray-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
+  onClick={() => setShowAuthModal(true)}
+  className="!rounded-full btn-primary px-3 py-3 h-auto w-auto flex items-center justify-center"
+>
+  <User className="w-4 h-4" />
+</Button>
+
               )}
             </div>
           </div>

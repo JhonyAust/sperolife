@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Mail, Phone, MapPin, Send, MessageCircle, Clock, Sparkles, 
-  Facebook, Instagram, ArrowRight, Zap, Heart, Star, 
-  ShoppingBag, Headphones, CheckCircle 
+  Facebook, Instagram, ArrowRight, Star, 
+  ShoppingBag, Headphones, CheckCircle, Navigation, Heart
 } from "lucide-react";
 import { FaTiktok } from "react-icons/fa";
 
@@ -22,7 +22,6 @@ const ContactUs = () => {
       link: "mailto:sperolifebd@gmail.com",
       description: "Get a response within 24 hours",
       gradient: "from-[#FE0002] to-[#be185d]",
-      bgGradient: "from-rose-50 to-pink-50"
     },
     {
       icon: <Phone className="w-6 h-6 sm:w-8 sm:h-8" />,
@@ -31,7 +30,6 @@ const ContactUs = () => {
       link: "tel:+8801750873525",
       description: "Mon-Sat, 10AM - 8PM",
       gradient: "from-[#be185d] to-[#FE0002]",
-      bgGradient: "from-pink-50 to-rose-50"
     },
     {
       icon: <MapPin className="w-6 h-6 sm:w-8 sm:h-8" />,
@@ -40,7 +38,6 @@ const ContactUs = () => {
       link: null,
       description: "Shop 1/01, 2nd Floor, Eastern Banabithi",
       gradient: "from-[#FE0002] to-rose-600",
-      bgGradient: "from-orange-50 to-rose-50"
     },
   ];
 
@@ -87,21 +84,11 @@ const ContactUs = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-rose-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-white">
       <style jsx>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-20px) rotate(5deg); }
-        }
-
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-30px) rotate(-5deg); }
-        }
-
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.5; box-shadow: 0 0 30px rgba(254, 0, 2, 0.4); }
-          50% { opacity: 1; box-shadow: 0 0 60px rgba(254, 0, 2, 0.8); }
         }
 
         @keyframes shimmer {
@@ -111,20 +98,6 @@ const ContactUs = () => {
 
         .animate-float {
           animation: float 6s ease-in-out infinite;
-        }
-
-        .animate-float-slow {
-          animation: float-slow 8s ease-in-out infinite;
-        }
-
-        .gradient-glass {
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-        }
-
-        .shadow-glow-red {
-          box-shadow: 0 0 40px rgba(254, 0, 2, 0.3);
         }
 
         .shimmer-effect {
@@ -148,13 +121,6 @@ const ContactUs = () => {
           animation: shimmer 3s infinite;
         }
       `}</style>
-
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-[#FE0002]/10 rounded-full mix-blend-multiply filter blur-3xl animate-float" />
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-[#be185d]/10 rounded-full mix-blend-multiply filter blur-3xl animate-float-slow" />
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-rose-300/10 rounded-full mix-blend-multiply filter blur-3xl animate-float" />
-      </div>
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-[#FE0002] via-[#be185d] to-rose-700 text-white py-16 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden mt-16 md:mt-0">
@@ -181,14 +147,12 @@ const ContactUs = () => {
           ))}
         </div>
 
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#be185d]/10 to-[#be185d]/30" />
-
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 mb-6 sm:mb-8 px-4 sm:px-6 py-2 sm:py-3 gradient-glass rounded-full border border-white/30 shadow-glow-red"
+            className="inline-flex items-center gap-2 mb-6 sm:mb-8 px-4 sm:px-6 py-2 sm:py-3 bg-white/10 backdrop-blur-sm rounded-full border border-white/30"
           >
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 animate-pulse" />
             <span className="text-xs sm:text-sm font-bold tracking-wide">WE'RE HERE FOR YOU</span>
@@ -223,19 +187,20 @@ const ContactUs = () => {
             transition={{ duration: 0.7, delay: 0.6 }}
             className="mt-8 sm:mt-12 flex flex-wrap gap-4 justify-center"
           >
-            
-            <a  href="https://wa.me/8801750873525?text=Hi%20SperoLife!%20I%20have%20a%20question%20about%20your%20products."
+            <a
+              href="https://wa.me/8801750873525?text=Hi%20SperoLife!%20I%20have%20a%20question%20about%20your%20products."
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-white text-[#FE0002] rounded-full font-bold text-sm sm:text-base shadow-lg hover:shadow-glow-red transition-all duration-300 hover:scale-105 shimmer-effect"
+              className="group inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-white text-[#FE0002] rounded-full font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 shimmer-effect"
             >
               <MessageCircle className="w-5 h-5" />
               WhatsApp Us
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
             
-              <a href="mailto:sperolifebd@gmail.com"
-              className="group inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 gradient-glass border border-white/30 text-white rounded-full font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+            <a
+              href="mailto:sperolifebd@gmail.com"
+              className="group inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-full font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
             >
               <Mail className="w-5 h-5" />
               Email Us
@@ -245,7 +210,7 @@ const ContactUs = () => {
       </section>
 
       {/* Why Contact Us Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 relative z-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -270,7 +235,7 @@ const ContactUs = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-[#FE0002]/30 hover:shadow-lg transition-all duration-300"
+              className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-[#FE0002]/30 hover:shadow-lg transition-all duration-300"
             >
               <div className="w-12 h-12 bg-gradient-to-r from-[#FE0002] to-[#be185d] rounded-xl flex items-center justify-center text-white mb-4">
                 {item.icon}
@@ -282,69 +247,101 @@ const ContactUs = () => {
         </div>
       </section>
 
-      {/* Contact Methods Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 relative z-20">
+     
+
+      {/* Google Map Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-center mb-12 sm:mb-16"
+          className="text-center mb-12"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 mb-4">
-            Multiple Ways to Connect
+          <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 bg-rose-50 rounded-full">
+            <MapPin className="w-4 h-4 text-[#FE0002]" />
+            <span className="text-sm font-semibold text-[#FE0002]">Find Us</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-[#FE0002] to-[#be185d] bg-clip-text text-transparent mb-4">
+            Visit Our Store
           </h2>
           <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-            Choose your preferred method and we'll respond promptly
+            Come see our collection in person at our Dhaka location
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-          {contactMethods.map((method, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.15, duration: 0.6 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="group relative bg-white rounded-3xl p-8 sm:p-10 shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 overflow-hidden"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${method.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-              
-              <div className={`relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br ${method.gradient} rounded-2xl flex items-center justify-center text-white mb-6 shadow-md group-hover:shadow-glow-red group-hover:scale-110 transition-all duration-500`}>
-                {method.icon}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-200"
+        >
+          {/* Map Container */}
+          <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px]">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3651.7017642399414!2d90.43864707389282!3d23.75801228848687!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b977bd477dc7%3A0x5d4fc427086d61d6!2s10%20Tola%20Market%20%7C%20South%20Banasree!5e0!3m2!1sen!2sbd!4v1764439802590!5m2!1sen!2sbd"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="SperoLife Store Location"
+              className="absolute inset-0"
+            />
+          </div>
+
+          {/* Location Details */}
+          <div className="p-6 sm:p-8 bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#FE0002] to-[#be185d] rounded-xl flex items-center justify-center shrink-0">
+                    <MapPin className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900 mb-1">Address</h3>
+                    <p className="text-gray-700 font-medium">Shop: 1/01, 2nd floor</p>
+                    <p className="text-gray-600">Eastern Banabithi Shopping Complex</p>
+                    <p className="text-gray-600">(10 tola market), Dhaka-1219</p>
+                  </div>
+                </div>
               </div>
-              
-              <h3 className="relative text-xl sm:text-2xl font-bold text-gray-900 mb-2 group-hover:text-[#FE0002] transition-colors duration-300">
-                {method.title}
-              </h3>
-              
-              <p className="relative text-sm sm:text-base text-gray-600 mb-4">
-                {method.description}
-              </p>
 
-              {method.link ? (
-                
-                <a  href={method.link}
-                  className="relative inline-block text-base sm:text-lg font-bold bg-gradient-to-r from-[#FE0002] to-[#be185d] bg-clip-text text-transparent transition-colors duration-300 break-all group-hover:underline decoration-2 underline-offset-4"
-                >
-                  {method.detail}
-                </a>
-              ) : (
-                <p className="relative text-base sm:text-lg font-bold text-gray-900">
-                  {method.detail}
-                </p>
-              )}
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#be185d] to-[#FE0002] rounded-xl flex items-center justify-center shrink-0">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900 mb-1">Store Hours</h3>
+                    <p className="text-gray-700">Monday - Saturday</p>
+                    <p className="text-gray-600 font-medium">10:00 AM - 8:00 PM</p>
+                    <p className="text-gray-500 text-sm mt-2">Closed on Sundays</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${method.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`} />
-            </motion.div>
-          ))}
-        </div>
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <a
+                href="https://www.google.com/maps/dir//23.75801228848687,90.43864707389282"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FE0002] to-[#be185d] text-white rounded-full font-bold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <Navigation className="w-5 h-5" />
+                Get Directions
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </a>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* Main Contact Card */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 relative z-20">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -355,11 +352,8 @@ const ContactUs = () => {
           <div className="relative bg-gradient-to-r from-[#FE0002] to-[#be185d] px-6 sm:px-12 py-8 sm:py-12 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
             
-            <div className="absolute top-4 right-4 w-20 h-20 bg-white/10 rounded-full animate-float" />
-            <div className="absolute bottom-4 left-4 w-16 h-16 bg-white/10 rounded-full animate-float-slow" />
-            
             <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 gradient-glass rounded-2xl flex items-center justify-center shadow-md">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-md">
                 <Send className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
               </div>
               <div>
@@ -377,7 +371,7 @@ const ContactUs = () => {
             <div className="space-y-6 sm:space-y-8">
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-6 sm:p-8 bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl border border-rose-100 hover:border-[#FE0002]/50 hover:shadow-lg transition-all duration-300"
+                className="group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-6 sm:p-8 bg-gray-50 rounded-2xl border border-gray-200 hover:border-[#FE0002]/50 hover:shadow-lg transition-all duration-300"
               >
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#FE0002] to-[#be185d] rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
                   <Mail className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
@@ -387,7 +381,8 @@ const ContactUs = () => {
                     Email Address
                   </h3>
                   
-                  <a  href="mailto:sperolifebd@gmail.com"
+                  <a
+                    href="mailto:sperolifebd@gmail.com"
                     className="inline-block bg-gradient-to-r from-[#FE0002] to-[#be185d] bg-clip-text text-transparent font-bold text-base sm:text-lg md:text-xl hover:underline decoration-2 underline-offset-4 break-all transition-colors duration-300"
                   >
                     sperolifebd@gmail.com
@@ -401,7 +396,7 @@ const ContactUs = () => {
 
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-6 sm:p-8 bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl border border-pink-100 hover:border-[#be185d]/50 hover:shadow-lg transition-all duration-300"
+                className="group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-6 sm:p-8 bg-gray-50 rounded-2xl border border-gray-200 hover:border-[#be185d]/50 hover:shadow-lg transition-all duration-300"
               >
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#be185d] to-[#FE0002] rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
                   <Phone className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
@@ -411,7 +406,8 @@ const ContactUs = () => {
                     Phone Number
                   </h3>
                   
-                 <a   href="tel:+8801750873525"
+                  <a
+                    href="tel:+8801750873525"
                     className="inline-block bg-gradient-to-r from-[#be185d] to-[#FE0002] bg-clip-text text-transparent font-bold text-base sm:text-lg md:text-xl hover:underline decoration-2 underline-offset-4 transition-colors duration-300"
                   >
                     +880 1750-873525
@@ -425,32 +421,7 @@ const ContactUs = () => {
                 </div>
               </motion.div>
 
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="group flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-6 sm:p-8 bg-gradient-to-br from-orange-50 to-rose-50 rounded-2xl border border-orange-100 hover:border-rose-300 hover:shadow-lg transition-all duration-300"
-              >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#FE0002] to-rose-600 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
-                  <MapPin className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                </div>
-                <div className="flex-1 min-w-0 w-full">
-                  <h3 className="font-black text-lg sm:text-xl text-gray-900 mb-2">
-                    Our Store Location
-                  </h3>
-                  <p className="text-base sm:text-lg font-bold text-gray-900 mb-1">
-                    Shop: 1/01, 2nd floor
-                  </p>
-                  <p className="text-sm sm:text-base text-gray-700">
-                    Eastern Banabithi Shopping Complex
-                  </p>
-                  <p className="text-sm sm:text-base text-gray-700">
-                    (10 tola market), Dhaka-1219
-                  </p>
-                  <p className="text-sm sm:text-base text-gray-600 mt-3 flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4" />
-                    Visit us for an in-person shopping experience
-                  </p>
-                </div>
-              </motion.div>
+             
 
               <div className="pt-6 sm:pt-8 border-t-2 border-gray-200">
                 <div className="flex items-center gap-3 mb-6">
@@ -488,9 +459,9 @@ const ContactUs = () => {
         </motion.div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative bg-gradient-to-r from-gray-900 via-[#be185d] to-gray-900 py-16 sm:py-24 px-4 sm:px-6 overflow-hidden">
-        <div className="absolute inset-0">
+{/* CTA Section */}
+      <section className="relative bg-gradient-to-r from-[#FE0002] via-[#be185d] to-rose-700 text-white py-16 sm:py-24 px-4 sm:px-6 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
           {[...Array(30)].map((_, i) => (
             <motion.div
               key={i}
@@ -512,7 +483,7 @@ const ContactUs = () => {
           ))}
         </div>
 
-         <div className="absolute inset-0 bg-gradient-to-r from-[#FE0002]/20 via-transparent to-[#be185d]/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#FE0002]/20 via-transparent to-[#be185d]/20" />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
@@ -522,7 +493,7 @@ const ContactUs = () => {
             viewport={{ once: true }}
             className="space-y-6 sm:space-y-8"
           >
-            <div className="inline-flex items-center gap-2 mb-4 px-4 sm:px-6 py-2 sm:py-3 gradient-glass rounded-full border border-white/30">
+            <div className="inline-flex items-center gap-2 mb-4 px-4 sm:px-6 py-2 sm:py-3 bg-white/10 backdrop-blur-sm rounded-full border border-white/30">
               <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-pulse" />
               <span className="text-xs sm:text-sm font-bold text-white tracking-wide">ALWAYS AVAILABLE</span>
             </div>
@@ -546,12 +517,36 @@ const ContactUs = () => {
               <a  href="https://wa.me/8801750873525?text=Hi%20SperoLife!%20I%20have%20a%20question%20about%20your%20products."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-[#FE0002] rounded-full font-bold text-base shadow-lg hover:shadow-glow-red transition-all duration-300 hover:scale-105"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-[#FE0002] rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 <MessageCircle className="w-5 h-5" />
                 Start a Conversation
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
+
+              
+              <a  href="mailto:sperolifebd@gmail.com"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-full font-bold text-base shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <Sparkles className="w-5 h-5" />
+                Email Us
+              </a>
+            </div>
+
+            {/* Trust badges */}
+            <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-8 max-w-2xl mx-auto">
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-black text-white mb-1">24hrs</div>
+                <div className="text-xs sm:text-sm text-white/80 font-medium">Response Time</div>
+              </div>
+              <div className="text-center border-x border-white/30">
+                <div className="text-2xl sm:text-3xl font-black text-white mb-1">100+</div>
+                <div className="text-xs sm:text-sm text-white/80 font-medium">Happy Customers</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-black text-white mb-1">7 Days</div>
+                <div className="text-xs sm:text-sm text-white/80 font-medium">Weekly Support</div>
+              </div>
             </div>
           </motion.div>
         </div>

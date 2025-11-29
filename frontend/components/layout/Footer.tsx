@@ -39,7 +39,7 @@ export default function Footer() {
     "text-gray-600 hover:text-[#FE0002] hover:translate-x-1 inline-block transition-all duration-300";
 
   return (
-    <footer className="bg-white py-12 px-6 sm:px-8 mb-16 md:mb-0  relative overflow-hidden">
+    <footer className="bg-white py-12 px-6 sm:px-8   relative overflow-hidden">
       {/* Decorative gradient line at top */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gray-200 "></div>
       
@@ -109,12 +109,12 @@ export default function Footer() {
                   Terms & Conditions
                 </Link>
               </li>
-              <li className="flex items-center gap-2">
+              {/* <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#FE0002]/60"></span>
                 <Link href="/privacy" className={linkClass}>
                   Privacy Policy
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -136,9 +136,9 @@ export default function Footer() {
                 <span>+880 1750-873525</span>
               </li>
               <li className="flex items-start gap-3 hover:text-[#FE0002] transition-colors duration-300">
-                <MapPin className="w-10 h-8 mt-0.5 text-[#FE0002]" />
-                <span>Shop: 1/01, 2nd floor, Eastern Banabithi Shopping Complex (10 tola market), Dhaka-1219.</span>
-              </li>
+              <MapPin className="w-4 h-4 mt-1 shrink-0 text-[#FE0002]" />
+              <span>Shop: 1/01, 2nd floor, Eastern Banabithi Shopping Complex (10 tola market), Dhaka-1219.</span>
+            </li>
             </ul>
           </div>
         </div>

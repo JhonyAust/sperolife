@@ -29,8 +29,8 @@ import {
   loginWithGoogle, 
   forgotPassword 
 } from "@/lib/redux/slices/authSlice";
-import { setCart, mergeGuestCart, fetchCartItems } from "@/lib/redux/slices/cartSlice"; // ✅ Add fetchCartItems
-import { setWishlist, mergeGuestWishlist, fetchWishlist } from "@/lib/redux/slices/wishlistSlice"; // ✅ Add fetchWishlist
+import { setCart, mergeGuestCart, fetchCartItems } from "@/lib/redux/slices/cartSlice";
+import { setWishlist, mergeGuestWishlist, fetchWishlist } from "@/lib/redux/slices/wishlistSlice";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -104,42 +104,37 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     router.push("/");
   };
 
- // Merge guest data after login
-const mergeGuestData = async (userId: string) => {
-  try {
-    // Get guest cart from localStorage
-    const guestCart = localStorage.getItem("guestCart");
-    if (guestCart) {
-      const cartItems = JSON.parse(guestCart);
-      // ✅ Await the merge and then fetch updated cart
-      await dispatch(mergeGuestCart({ userId, items: cartItems })).unwrap();
-      localStorage.removeItem("guestCart");
-      // ✅ Fetch the merged cart from DB
-      await dispatch(fetchCartItems(userId)).unwrap();
-    } else if (isAuthenticated) {
-      // ✅ If no guest cart, just fetch user's cart from DB
-      await dispatch(fetchCartItems(userId)).unwrap();
-    }
+  // Merge guest data after login
+  const mergeGuestData = async (userId: string) => {
+    try {
+      // Get guest cart from localStorage
+      const guestCart = localStorage.getItem("guestCart");
+      if (guestCart) {
+        const cartItems = JSON.parse(guestCart);
+        await dispatch(mergeGuestCart({ userId, items: cartItems })).unwrap();
+        localStorage.removeItem("guestCart");
+        await dispatch(fetchCartItems(userId)).unwrap();
+      } else {
+        await dispatch(fetchCartItems(userId)).unwrap();
+      }
 
-    // Get guest wishlist from localStorage
-    const guestWishlist = localStorage.getItem("guestWishlist");
-    if (guestWishlist) {
-      const productIds = JSON.parse(guestWishlist);
-      await dispatch(mergeGuestWishlist({ 
-        userId, 
-        items: productIds
-      })).unwrap();
-      localStorage.removeItem("guestWishlist");
-      // ✅ Fetch the merged wishlist from DB
-      await dispatch(fetchWishlist(userId)).unwrap();
-    } else if (isAuthenticated) {
-      // ✅ If no guest wishlist, just fetch user's wishlist from DB
-      await dispatch(fetchWishlist(userId)).unwrap();
+      // Get guest wishlist from localStorage
+      const guestWishlist = localStorage.getItem("guestWishlist");
+      if (guestWishlist) {
+        const productIds = JSON.parse(guestWishlist);
+        await dispatch(mergeGuestWishlist({ 
+          userId, 
+          items: productIds
+        })).unwrap();
+        localStorage.removeItem("guestWishlist");
+        await dispatch(fetchWishlist(userId)).unwrap();
+      } else {
+        await dispatch(fetchWishlist(userId)).unwrap();
+      }
+    } catch (error) {
+      console.error("Error merging guest data:", error);
     }
-  } catch (error) {
-    console.error("Error merging guest data:", error);
-  }
-};
+  };
 
   // Handle login
   const handleLogin = async (e: React.FormEvent) => {
@@ -274,11 +269,11 @@ const mergeGuestData = async (userId: string) => {
       <DialogContent className="max-w-md p-0 overflow-hidden border-0 bg-transparent">
         <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Animated Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-60"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-pink-50 to-rose-50 opacity-60"></div>
           
           {/* Decorative Blobs */}
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-300 rounded-full blur-3xl opacity-30 animate-pulse"></div>
-          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-300 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-300 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-pink-300 rounded-full blur-3xl opacity-30 animate-pulse"></div>
 
           {/* Close Button */}
           <button
@@ -294,15 +289,15 @@ const mergeGuestData = async (userId: string) => {
               <div className="space-y-6">
                 <button
                   onClick={handleBackToLogin}
-                  className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-2 text-gray-600 hover:text-brand-500 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span className="text-sm font-medium">Back to Login</span>
                 </button>
 
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mb-4">
-                    <Mail className="w-8 h-8 text-blue-600" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-50 to-pink-50 rounded-full mb-4">
+                    <Mail className="w-8 h-8 text-brand-500" />
                   </div>
                   <h2 className="text-3xl font-bold mb-2">Forgot Password?</h2>
                   <p className="text-sm text-gray-600">
@@ -353,7 +348,7 @@ const mergeGuestData = async (userId: string) => {
                     <Button
                       type="submit"
                       disabled={forgotLoading}
-                      className="w-full"
+                      className="w-full btn-primary text-white"
                       size="lg"
                     >
                       {forgotLoading ? (
@@ -375,19 +370,16 @@ const mergeGuestData = async (userId: string) => {
               /* LOGIN/REGISTER VIEW */
               <>
                 <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full">
-                    <Sparkles className="w-5 h-5 text-blue-600 animate-pulse" />
-                    <span className="text-sm font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 bg-gradient-to-r from-brand-50 to-pink-50 rounded-full">
+                    <Sparkles className="w-5 h-5 text-brand-500 animate-pulse" />
+                    <span className="text-sm font-bold text-gradient-primary">
                       {activeTab === "login" ? "Welcome Back!" : "Join SperoLife"}
                     </span>
                   </div>
 
-                  <h1
-                      className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2"
-                    >
-                      {activeTab === "login" ? "Sign In" : "Create Account"}
-                    </h1>
-
+                  <h1 className="text-3xl font-bold text-gradient-primary mb-2">
+                    {activeTab === "login" ? "Sign In" : "Create Account"}
+                  </h1>
 
                   <p className="text-sm text-gray-600">
                     {activeTab === "login" ? (
@@ -396,7 +388,7 @@ const mergeGuestData = async (userId: string) => {
                         <button
                           type="button"
                           onClick={() => setActiveTab("register")}
-                          className="font-semibold text-blue-600 hover:text-blue-700"
+                          className="font-semibold text-brand-500 hover:text-brand-600"
                         >
                           Create an account
                         </button>
@@ -407,7 +399,7 @@ const mergeGuestData = async (userId: string) => {
                         <button
                           type="button"
                           onClick={() => setActiveTab("login")}
-                          className="font-semibold text-blue-600 hover:text-blue-700"
+                          className="font-semibold text-brand-500 hover:text-brand-600"
                         >
                           Sign in
                         </button>
@@ -471,7 +463,7 @@ const mergeGuestData = async (userId: string) => {
                         <button
                           type="button"
                           onClick={() => setShowForgotPassword(true)}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-sm text-brand-500 hover:text-brand-600 font-medium"
                         >
                           Forgot Password?
                         </button>
@@ -480,7 +472,7 @@ const mergeGuestData = async (userId: string) => {
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full"
+                        className="w-full btn-primary text-white"
                         size="lg"
                       >
                         {isSubmitting ? (
@@ -644,7 +636,7 @@ const mergeGuestData = async (userId: string) => {
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full"
+                        className="w-full btn-primary text-white"
                         size="lg"
                       >
                         {isSubmitting ? (
@@ -665,7 +657,7 @@ const mergeGuestData = async (userId: string) => {
 
                 <p className="mt-6 text-center text-xs text-gray-500">
                   By continuing, you agree to SperoLife's{" "}
-                  <a href="/terms" className="text-blue-600 hover:underline">
+                  <a href="/terms" className="text-brand-500 hover:underline">
                     Terms & Conditions
                   </a>
                 </p>

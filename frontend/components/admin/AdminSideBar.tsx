@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   Sparkles,
   Image,
+  Mic2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,12 @@ const menuItems = [
     title: "Banners",
     icon: Image, 
     href: "/admin/admin-portal-slrhs-25/banners",
+    gradient: "from-pink-500 to-rose-500",
+  },
+   {
+    title: "Announcement",
+    icon: Mic2, 
+    href: "/admin/admin-portal-slrhs-25/announcement",
     gradient: "from-pink-500 to-rose-500",
   },
   {

@@ -210,6 +210,30 @@ export const verifyUser = createAsyncThunk(
   }
 );
 
+// Update user profile (display name only)
+export const updateUserProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (
+    { userId, name }: { userId: string; name: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { data } = await api.put(`/auth/users/${userId}`, { name });
+      
+      // Update localStorage
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+      
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update profile"
+      );
+    }
+  }
+);
+
 // ============================================================================
 // SLICE
 // ============================================================================
@@ -360,6 +384,22 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+      // Update Profile
+    builder
+      .addCase(updateUserProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

@@ -12,7 +12,8 @@ import addressReducer from './slices/addressSlice';
 import notificationReducer from './slices/notificationSlice';
 import adminOrderReducer from './slices/adminOrderSlice';
 import couponReducer from './slices/couponSlice';
-
+import announcementReducer from './slices/announcementSlice'
+import adminAnnouncementReducer from './slices/adminAnnouncementSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -28,6 +29,8 @@ export const store = configureStore({
     notification: notificationReducer,
     adminOrder: adminOrderReducer,
     coupon: couponReducer,
+    announcement: announcementReducer,
+    adminAnnouncement: adminAnnouncementReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

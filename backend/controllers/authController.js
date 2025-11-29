@@ -400,3 +400,64 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+// @desc    Update user profile (display name only)
+// @route   PUT /api/users/:id
+// @access  Private
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const userId = req.params.id;
+
+    // Check if user is authorized to update this profile
+    if (req.user.id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this profile'
+      });
+    }
+
+    // Validation
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a name'
+      });
+    }
+
+    // Update user name only
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { name: name.trim() },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Display name updated successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile'
+    });
+  }
+};

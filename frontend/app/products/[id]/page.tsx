@@ -599,7 +599,7 @@ const handleBuyNow = async () => {
             <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-3 sm:pt-4 border-t-2 border-gray-200">
               <div className="flex flex-col items-center gap-1 sm:gap-1.5 p-2 sm:p-2.5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group">
                 <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 group-hover:animate-bounce" />
-                <span className="text-[9px] sm:text-[10px] font-semibold text-gray-900 text-center leading-tight">Free Delivery</span>
+                <span className="text-[9px] sm:text-[10px] font-semibold text-gray-900 text-center leading-tight">Fast Delivery</span>
               </div>
               <div className="flex flex-col items-center gap-1 sm:gap-1.5 p-2 sm:p-2.5 bg-gradient-to-br from-green-50 to-green-100 rounded-lg hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group">
                 <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 group-hover:animate-bounce" />
