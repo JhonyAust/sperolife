@@ -215,8 +215,8 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Discount Badge */}
         {hasDiscount && (
           <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10">
-            <div className="bg-[#FD0002] text-white px-2 py-1 sm:px-4 sm:py-2 rounded-full font-bold text-xs sm:text-sm shadow-lg flex items-center gap-1 animate-bounce-slow">
-              <Zap className="w-3 h-3 sm:w-4 sm:h-4 fill-white" />
+            <div className="bg-[#FD0002] text-white px-1 py-1  rounded-full font-semibold text-[8px] sm:text-[10px]  shadow-lg flex items-center gap-1 animate-bounce-slow">
+              <Zap className="w-3 h-3  fill-white" />
               {discount}% OFF
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* New Arrival Badge */}
         {product.isNewArrival && !hasDiscount && (
           <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10">
-            <div className="bg-black text-white px-2 py-1 sm:px-4 sm:py-2 rounded-full font-semibold text-xs sm:text-sm shadow-lg">
+            <div className="bg-black text-white px-1 py-1  rounded-full font-semibold text-[8px] sm:text-[10px] shadow-lg">
               NEW
             </div>
           </div>
@@ -234,7 +234,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Out of Stock Overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
-            <div className="bg-white text-gray-900 px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-sm sm:text-base shadow-xl">
+            <div className="bg-white text-gray-900 px-1 py-1  rounded-full font-semibold text-[8px] sm:text-[10px] shadow-xl">
               Out of Stock
             </div>
           </div>
@@ -259,7 +259,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 : "group-hover/wishlist:scale-110"
             } ${togglingWishlist ? "animate-pulse" : ""}`}>
               <Heart
-                className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 ${
+                className={`w-3 h-3 sm:w-4 sm:h-4 transition-all duration-300 ${
                   isInWishlist
                     ? "fill-red-500 text-red-500 animate-heart-beat"
                     : "text-gray-600 group-hover/wishlist:text-red-500 group-hover/wishlist:scale-110"
@@ -499,7 +499,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <div className="flex">
             {[...Array(5)].map((_, i) => (
               <svg
@@ -518,7 +518,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-xs sm:text-sm text-gray-500 font-medium">
             {product.rating.toFixed(1)}
           </span>
-        </div>
+        </div> */}
       </div>
 
       <style jsx>{`

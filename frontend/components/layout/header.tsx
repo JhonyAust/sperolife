@@ -451,8 +451,8 @@ export default function Header() {
 
       {/* Mobile Menu Sheet */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-[300px] p-0">
-          <SheetHeader className="p-6 border-b border-gray-100 bg-gradient-to-br from-red-50 to-white">
+        <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+          <SheetHeader className="p-6 border-b border-gray-100 bg-gradient-to-br from-red-50 to-white flex-shrink-0">
             <div className="flex items-center justify-center">
               <div className="relative w-40 h-20">
                 <Image
@@ -465,7 +465,7 @@ export default function Header() {
             </div>
           </SheetHeader>
 
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6 overflow-y-auto scrollbar-hide flex-1">
             {/* User Section */}
             {isAuthenticated && user ? (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-red-50 to-gray-50 border border-red-100">
@@ -590,6 +590,15 @@ export default function Header() {
 
         .animate-shimmer {
           animation: shimmer 3s infinite;
+        }
+
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </>

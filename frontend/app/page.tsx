@@ -14,7 +14,7 @@ export default function ModernHomePage() {
   const dispatch = useDispatch();
   
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [activeTab, setActiveTab] = useState("bestseller");
+  const [activeTab, setActiveTab] = useState("new");
   const [isVisible, setIsVisible] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
@@ -46,7 +46,7 @@ export default function ModernHomePage() {
         console.error('Banner fetch error:', error);
       });
     
-    dispatch(fetchProducts({ page: 1, limit: 100 })).then((res) => {
+    dispatch(fetchProducts({ page: 1, limit: 50 })).then((res) => {
       if (res?.payload?.products) {
         const allProds = res.payload.products;
         setAllProducts(allProds);
@@ -138,7 +138,7 @@ export default function ModernHomePage() {
                     <img
                       src={banner.image}
                       alt={banner.title || 'Banner'}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-fill object-center sm:object-cover"
                     />
                     {showContent && (
                       <div 
@@ -746,17 +746,20 @@ function SubCategoryRow({ title, icon, products, loading, onSeeAll }) {
         ))}
         
         {hasMore && (
+          <div className="flex gap-2">
           <button
             onClick={onSeeAll}
-            className="w-[160px] flex-shrink-0 h-full min-h-[280px] bg-gradient-to-br from-[#FD0002] to-red-600 rounded-lg flex flex-col items-center justify-center gap-3 text-white hover:scale-105 transition-all duration-300 shadow-lg"
+            className="w-[160px] flex-shrink-0 h-full min-h-[280px]  rounded-lg flex flex-col items-center justify-center gap-3 text-white hover:scale-105 transition-all duration-300 shadow-lg"
           >
-            <ShoppingBag className="w-12 h-12" />
+            <ShoppingBag className="w-12 h-12 text-brand" />
             <div className="text-center px-4">
-              <p className="font-bold text-lg">See All</p>
-              <p className="text-sm opacity-90">{title}</p>
+              <p className="font-bold text-lg text-gradient-primary">See All</p>
+              <p className="text-sm opacity-90 text-gradient-primary">{title}</p>
             </div>
-            <ArrowRight className="w-6 h-6" />
+            <ArrowRight className="w-6 h-6 text-brand" />
           </button>
+
+          </div>
         )}
       </div>
 
