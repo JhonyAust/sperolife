@@ -409,9 +409,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="login">Login</TabsTrigger>
-                    <TabsTrigger value="register">Register</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 mb-6  ">
+                    <TabsTrigger className="text-gradient-primary" value="login">Login</TabsTrigger>
+                    <TabsTrigger className="text-gradient-primary" value="register">Register</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="login" className="space-y-4">
@@ -426,7 +426,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={loginData.email}
                             onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                             placeholder="your@email.com"
-                            className="pl-10 text-gray-700"
+                            className="pl-10 focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0
+                      focus-visible:outline-none transition-all duration-300 text-gray-700"
                             required
                           />
                         </div>
@@ -442,7 +443,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={loginData.password}
                             onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                             placeholder="Enter your password"
-                            className="pl-10 pr-10 text-gray-700"
+                            className="pl-10 pr-10 text-gray-700 focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0
+                      focus-visible:outline-none transition-all duration-300"
                             required
                           />
                           <button
@@ -528,7 +530,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={registerData.name}
                             onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                             placeholder="John Doe"
-                            className="pl-10 text-gray-700"
+                            className="pl-10 text-gray-700 focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0
+                      focus-visible:outline-none transition-all duration-300"
                             required
                           />
                         </div>
@@ -544,7 +547,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={registerData.email}
                             onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                             placeholder="your@email.com"
-                            className="pl-10 text-gray-700"
+                            className="pl-10 text-gray-700 focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0
+                      focus-visible:outline-none transition-all duration-300"
                             required
                           />
                         </div>
@@ -563,7 +567,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                               setShowPasswordRequirements(e.target.value.length > 0);
                             }}
                             placeholder="Create a strong password"
-                            className="pl-10 pr-10 text-gray-700"
+                            className="pl-10 pr-10 text-gray-700 focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0
+                      focus-visible:outline-none transition-all duration-300"
                             required
                           />
                           <button
@@ -616,7 +621,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             value={registerData.confirmPassword}
                             onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                             placeholder="Confirm your password"
-                            className="pl-10 pr-10 text-gray-700"
+                            className="pl-10 pr-10 text-gray-700 focus-visible:border-red-600 focus-visible:ring-0 focus-visible:ring-offset-0
+                      focus-visible:outline-none transition-all duration-300"
                             required
                           />
                           <button

@@ -77,8 +77,15 @@ export default function ModernCheckout() {
     pincode: "",
     notes: "",
   });
+// Check if cart has any sneakers
+const hasSneakers = cartItems.some(item => 
+  item.subCategory?.toLowerCase() === "sneakers"
+);
 
-  const shippingCharge = shippingType === "inside" ? 80 : 120;
+const shippingCharge = hasSneakers 
+  ? (shippingType === "inside" ? 100 : 150)
+  : (shippingType === "inside" ? 80 : 120);
+ 
 
   // Calculate cart totals - use salePrice if available, otherwise regular price
   const totalCartAmount = cartItems.reduce((sum, item) => {
@@ -857,7 +864,7 @@ export default function ModernCheckout() {
                 <ShippingOption
                   id="inside"
                   label="Inside Dhaka"
-                  price="৳ 80"
+                  price={`৳ ${hasSneakers ? 100 : 80}`}
                   description="Delivery in 2-3 business days"
                   icon={Zap}
                   checked={shippingType === "inside"}
@@ -866,7 +873,7 @@ export default function ModernCheckout() {
                 <ShippingOption
                   id="outside"
                   label="Outside Dhaka"
-                  price="৳ 120"
+                  price={`৳ ${hasSneakers ? 150 : 120}`}
                   description="Delivery in 3-5 business days"
                   icon={Truck}
                   checked={shippingType === "outside"}

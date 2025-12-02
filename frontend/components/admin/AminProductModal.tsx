@@ -46,6 +46,33 @@ interface ProductModalProps {
   uploading: boolean;
   onImageUpload: (file: File) => Promise<string>;
 }
+const categories = [
+  { 
+    name: "Men", 
+    value: "men",
+    subcategories: ["Shirts", "T-Shirts", "Shacket", "Jackets", "Hoodies", "Pants", "Jeans", "Shoes"]
+  },
+  { 
+    name: "Women", 
+    value: "women",
+    subcategories: ["Dresses", "Tops", "Pants", "Skirts", "Jackets", "Shoes", "Bags"]
+  },
+  { 
+    name: "Kids", 
+    value: "kids",
+    subcategories: ["Boys", "Girls", "Infants", "Shoes", "Accessories"]
+  },
+  { 
+    name: "Accessories", 
+    value: "accessories",
+    subcategories: ["Bags", "Watches", "Belts", "Wallets", "Sunglasses", "Hats"]
+  },
+  { 
+    name: "Footwear", 
+    value: "footwear",
+    subcategories: ["Sneakers", "Boots", "Sandals", "Formal Shoes", "Sports Shoes"]
+  },
+];
 
 export default function AdminProductModal({ 
   isOpen, 
@@ -83,7 +110,7 @@ export default function AdminProductModal({
   const [newTag, setNewTag] = useState('');
   const [newFeature, setNewFeature] = useState('');
   const [activeTab, setActiveTab] = useState<'basic' | 'sizes' | 'media' | 'seo'>('basic');
-
+  const [availableSubcategories, setAvailableSubcategories] = useState<string[]>([]);
   const generateSKU = (productName: string, category: string, size?: string) => {
     const prefix = 'SPL';
     const categoryCode = category.substring(0, 3).toUpperCase() || 'GEN';
@@ -162,7 +189,17 @@ export default function AdminProductModal({
       });
     }
   }, [product, isOpen]);
-
+useEffect(() => {
+  if (formData.category) {
+    const selectedCategory = categories.find(cat => 
+      cat.value === formData.category.toLowerCase() || 
+      cat.name.toLowerCase() === formData.category.toLowerCase()
+    );
+    setAvailableSubcategories(selectedCategory?.subcategories || []);
+  } else {
+    setAvailableSubcategories([]);
+  }
+}, [formData.category]);
   const addSizeVariant = () => {
     const newVariant: SizeVariant = { 
       size: '', 
@@ -368,37 +405,54 @@ export default function AdminProductModal({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Category *</label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-gray-900"
-                    placeholder="e.g., Clothing"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Sub Category</label>
-                  <input
-                    type="text"
-                    value={formData.subCategory}
-                    onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-gray-900"
-                    placeholder="e.g., T-Shirts"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Brand</label>
-                  <input
-                    type="text"
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-gray-900"
-                    placeholder="Brand name"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Category *</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => {
+                    setFormData({ 
+                      ...formData, 
+                      category: e.target.value,
+                      subCategory: '' // Reset subcategory when category changes
+                    });
+                  }}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-gray-900 bg-white"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Sub Category</label>
+                <select
+                  value={formData.subCategory}
+                  onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                  disabled={!formData.category}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select Sub Category</option>
+                  {availableSubcategories.map((subcat) => (
+                    <option key={subcat} value={subcat}>
+                      {subcat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Brand</label>
+                <input
+                  type="text"
+                  value={formData.brand}
+                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-gray-900"
+                  placeholder="Brand name"
+                />
+              </div>
+            </div>
 
               {!formData.hasSizeVariants && (
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-5 border-2 border-indigo-200">

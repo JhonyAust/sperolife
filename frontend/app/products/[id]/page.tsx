@@ -194,6 +194,7 @@ const handleAddToCart = async () => {
         image: product.images[0],
         size: selectedSize || 'One Size',
         quantity: quantity,
+        subCategory: product.subCategory,
         stock: product.hasSizeVariants 
           ? product.sizeVariants?.find((v: any) => v.size === selectedSize)?.stock || 0
           : product.stock
@@ -255,6 +256,7 @@ const handleBuyNow = async () => {
         image: product.images[0],
         size: selectedSize || 'One Size',
         quantity: quantity,
+        subCategory: product.subCategory,
         stock: product.hasSizeVariants 
           ? product.sizeVariants?.find((v: any) => v.size === selectedSize)?.stock || 0
           : product.stock
@@ -360,20 +362,20 @@ const handleBuyNow = async () => {
               {/* Badges */}
               <div className="absolute top-3 sm:top-4 left-3 sm:left-4 flex flex-col gap-2">
                 {hasDiscount && (
-                  <div className="bg-gradient-to-r from-[#FD0002] to-red-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-bold text-[10px] sm:text-xs shadow-lg flex items-center gap-1 animate-pulse-slow">
-                    <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-white" />
+                  <div className="bg-gradient-to-r from-[#FD0002] to-red-600 text-white px-2.5  py-1  rounded-full font-bold text-[10px]  shadow-lg flex items-center gap-1 animate-pulse-slow">
+                    <Zap className="w-2 h-2 sm:w-2.5 sm:h-2.5 fill-white" />
                     {discount}% OFF
                   </div>
                 )}
                 {product.isNewArrival && (
-                  <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold text-[10px] sm:text-xs shadow-lg flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2.5  py-1 rounded-full font-semibold text-[10px]  shadow-lg flex items-center gap-1">
+                    <Sparkles className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                     NEW
                   </div>
                 )}
                 {product.isBestSeller && (
-                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold text-[10px] sm:text-xs shadow-lg flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5  py-1  rounded-full font-semibold text-[10px]  shadow-lg flex items-center gap-1">
+                    <TrendingUp className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                     Best Seller
                   </div>
                 )}
@@ -428,7 +430,7 @@ const handleBuyNow = async () => {
                 {product.name}
               </h1>
               
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
@@ -445,7 +447,7 @@ const handleBuyNow = async () => {
                   <span className="text-xs sm:text-sm font-semibold text-gray-900">{product.rating}</span>
                   <span className="text-xs text-gray-500">({product.reviewCount || 0})</span>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Price */}
@@ -491,7 +493,7 @@ const handleBuyNow = async () => {
                       }`}
                     >
                       <div className="text-xs sm:text-sm font-bold">{variant.size}</div>
-                      {variant.stock > 0 && variant.stock < 5 && (
+                      {product.subCategory !== "Sneakers" &&  variant.stock > 0 && variant.stock < 5 && (
                         <div className={`text-[9px] sm:text-[10px] mt-0.5 ${
                           selectedSize === variant.size ? 'text-white/80' : 'text-gray-500'
                         }`}>

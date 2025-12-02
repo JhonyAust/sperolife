@@ -32,7 +32,7 @@ exports.getCart = async (req, res) => {
 // @access  Private
 exports.addToCart = async (req, res) => {
   try {
-    const { userId, productId, quantity, size, color } = req.body;
+    const { userId, productId, quantity,subCategory, size, color } = req.body;
 
     console.log("📦 Add to cart request:", { userId, productId, quantity, size, color });
 
@@ -152,6 +152,7 @@ exports.addToCart = async (req, res) => {
         size,
         color: color || '',
         quantity,
+        subCategory,
         stock: sizeOption.stock
       });
     }

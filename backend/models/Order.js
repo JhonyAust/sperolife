@@ -1,6 +1,7 @@
 // models/Order.js
 
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const OrderSchema = new mongoose.Schema({
     userId: {
@@ -11,7 +12,6 @@ const OrderSchema = new mongoose.Schema({
     orderNumber: {
         type: String,
         unique: true
-            // Remove 'required: true' since we generate it automatically
     },
     cartItems: [{
         product: {
@@ -97,19 +97,66 @@ const OrderSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// 🔥 CRITICAL: Generate order number before saving
+// 🔥 Generate cryptographically secure unique order number
+function generateSecureOrderNumber() {
+    const timestamp = Date.now().toString(36).toUpperCase(); // Base36 timestamp
+    const randomBytes = crypto.randomBytes(4).toString('hex').toUpperCase(); // 8 random hex chars
+    const randomNum = Math.floor(Math.random() * 999).toString().padStart(3, '0'); // 3 random digits
+
+    // Mix them in a non-obvious pattern
+    // Format: XXXX-YYYY-ZZZZ (e.g., SL3K-9H2F-847)
+    const part1 = randomBytes.substring(0, 4);
+    const part2 = timestamp.substring(timestamp.length - 4);
+    const part3 = randomBytes.substring(4, 7) + randomNum.charAt(0);
+
+    return `SL${part1}-${part2}-${part3}`;
+}
+
+// Alternative: Even more random (no timestamp patterns)
+function generateFullyRandomOrderNumber() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (I, O, 0, 1)
+    let orderNum = 'SL';
+
+    // Generate 10 random characters in format: SLXXXX-XXXX-XX
+    for (let i = 0; i < 10; i++) {
+        if (i === 4 || i === 8) {
+            orderNum += '-';
+        }
+        orderNum += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    return orderNum;
+}
+
+// 🔥 Pre-save hook to generate order number
 OrderSchema.pre('save', async function(next) {
     if (this.isNew && !this.orderNumber) {
         try {
-            // Get count of all orders
-            const count = await mongoose.model('Order').countDocuments();
+            let orderNumber;
+            let attempts = 0;
+            const maxAttempts = 10;
 
-            // Generate order number: ORD-YEAR-NNNNNN
-            const year = new Date().getFullYear();
-            const orderNum = String(count + 1).padStart(6, '0');
-            this.orderNumber = `ORD-${year}-${orderNum}`;
+            // Keep generating until we get a unique one (very unlikely to need more than 1 attempt)
+            while (attempts < maxAttempts) {
+                // Use fully random method for maximum security
+                orderNumber = generateFullyRandomOrderNumber();
 
-            console.log('✅ Generated order number:', this.orderNumber);
+                // Check if this order number already exists
+                const existing = await mongoose.model('Order').findOne({ orderNumber });
+
+                if (!existing) {
+                    this.orderNumber = orderNumber;
+                    console.log('✅ Generated secure order number:', this.orderNumber);
+                    break;
+                }
+
+                attempts++;
+                console.log(`⚠️ Order number collision, retrying... (attempt ${attempts})`);
+            }
+
+            if (!this.orderNumber) {
+                throw new Error('Failed to generate unique order number after multiple attempts');
+            }
         } catch (error) {
             console.error('❌ Error generating order number:', error);
             return next(error);

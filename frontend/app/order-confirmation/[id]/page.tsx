@@ -239,18 +239,32 @@ export default function OrderConfirmation() {
             </motion.p>
 
             {/* Order Number Badge */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.7, type: "spring" }}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl shadow-2xl"
-            >
-              <Award className="w-6 h-6 text-white" />
-              <div className="text-left">
-                <p className="text-xs text-purple-100 font-semibold">Order Number</p>
-                <p className="text-xl font-black text-white">{orderNumber}</p>
-              </div>
-            </motion.div>
+<motion.div
+  initial={{ scale: 0 }}
+  animate={{ scale: 1 }}
+  transition={{ delay: 0.7, type: "spring" }}
+  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl shadow-2xl cursor-pointer hover:shadow-purple-400 transition-all duration-300 group"
+  onClick={() => {
+    navigator.clipboard.writeText(orderNumber);
+    toast.success("Order number copied to clipboard!", {
+      icon: "📋",
+      duration: 2000,
+    });
+  }}
+>
+  <Award className="w-6 h-6 text-white" />
+  <div className="text-left">
+            <p className="text-xs text-purple-100 font-semibold">Order Number (Click to Copy)</p>
+            <p className="text-xl font-black text-white flex items-center gap-2">
+              {orderNumber}
+              <span
+                className="text-md"
+              >
+                📋
+              </span>
+            </p>
+          </div>
+        </motion.div>
           </motion.div>
         </motion.div>
 

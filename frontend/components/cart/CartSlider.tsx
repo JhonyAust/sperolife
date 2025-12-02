@@ -59,12 +59,12 @@ export default function CartSlider({ isOpen, onClose }: CartSliderProps) {
                 </p>
               </div>
             </div>
-            <button
+            {/* <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
             >
               <X className="w-5 h-5" />
-            </button>
+            </button> */}
           </div>
         </SheetHeader>
 

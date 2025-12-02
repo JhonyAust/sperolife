@@ -129,6 +129,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         userId: user._id,
         productId: product._id,
         quantity: 1,
+        subCategory: product.subCategory,
         size: selectedSize || 'One Size',
         color: undefined
       })).unwrap();
@@ -153,6 +154,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         image: product.images[0],
         size: selectedSize || 'One Size',
         quantity: 1,
+        subCategory: product.subCategory,
         stock: product.hasSizeVariants 
           ? product.sizeVariants?.find(v => v.size === selectedSize)?.stock || 0
           : product.stock
@@ -388,15 +390,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                         }`}
                       >
                         <div className="text-xs sm:text-sm font-bold">{variant.size}</div>
-                        
-                        {variant.stock > 0 && variant.stock < 5 && (
+
+                        {product.subCategory !== "Sneakers" && variant.stock > 0 && variant.stock < 5 && (
                           <div className={`text-[6px] sm:text-[10px] mt-0.5 ${
                             selectedSize === variant.size ? "text-white/80" : "text-gray-500"
                           }`}>
                             {variant.stock} left
                           </div>
                         )}
-                        
+                                                
                         {variant.stock === 0 && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-full h-0.5 bg-gray-300 rotate-[-45deg] rounded-full" />

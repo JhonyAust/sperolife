@@ -16,6 +16,7 @@ export interface CartItem {
   color?: string;
   quantity: number;
   stock: number;
+  subCategory?: string;
 }
 
 export interface Product {

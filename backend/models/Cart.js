@@ -21,6 +21,7 @@ const cartItemSchema = new mongoose.Schema({
         min: 1,
         default: 1
     },
+    subCategory: String,
     stock: Number
 });
 

@@ -71,12 +71,14 @@ export const addToCartDB = createAsyncThunk(
       userId,
       productId,
       quantity,
+      subCategory,
       size,
       color,
     }: {
       userId: string;
       productId: string;
       quantity: number;
+      subCategory: string;
       size: string;
       color?: string;
     },
@@ -87,6 +89,7 @@ export const addToCartDB = createAsyncThunk(
         userId,
         productId,
         quantity,
+        subCategory,
         size,
         color,
       });

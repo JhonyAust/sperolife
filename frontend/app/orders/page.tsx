@@ -58,7 +58,7 @@ const OrdersPage = () => {
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/");
     }
   }, [isAuthenticated, router]);
 

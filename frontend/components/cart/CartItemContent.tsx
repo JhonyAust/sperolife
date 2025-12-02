@@ -20,6 +20,7 @@ interface CartItemContentProps {
     image: string;
     size: string;
     quantity: number;
+    subCategory: string;
     stock: number;
   };
 }
@@ -149,7 +150,7 @@ export default function CartItemContent({ cartItem }: CartItemContentProps) {
             </Button>
           </div>
           
-          {cartItem.stock < 10 && (
+          {cartItem.subCategory !== "Sneakers" && cartItem.stock < 10 &&  (
             <span className="text-xs text-orange-600 font-medium">
               Only {cartItem.stock} left
             </span>

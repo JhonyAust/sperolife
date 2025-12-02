@@ -325,7 +325,7 @@ export default function Header() {
                       Account Settings
                     </DropdownMenuItem>
                     {user.role === "admin" && (
-                      <DropdownMenuItem onClick={() => router.push("/admin/admin-portal-slrhs-25/orders")}>
+                      <DropdownMenuItem onClick={() => router.push("/admin/admin-portal-slrhs-25/dashboard")}>
                         <Settings className="mr-2 h-4 w-4 text-red-600" />
                         Admin Panel
                       </DropdownMenuItem>
@@ -339,11 +339,11 @@ export default function Header() {
                 </DropdownMenu>
               ) : (
                 <Button
-  onClick={() => setShowAuthModal(true)}
-  className="!rounded-full btn-primary px-3 py-3 h-auto w-auto flex items-center justify-center"
->
-  <User className="w-4 h-4" />
-</Button>
+                  onClick={() => setShowAuthModal(true)}
+                  className="!rounded-full btn-primary px-3 py-3 h-auto w-auto flex items-center justify-center"
+                >
+                  <User className="w-4 h-4" />
+                </Button>
 
               )}
             </div>
@@ -541,9 +541,21 @@ export default function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all"
                   >
-                    <Settings className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-700">Settings</span>
+                    <User className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium text-gray-700">Account</span>
                   </Link>
+
+                  {user.role === "admin" && (
+                    <Link
+                    href="/admin/admin-portal-slrhs-25/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all"
+                  >
+                    <Settings className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium text-gray-700">Admin Panel</span>
+                  </Link>
+                      
+                    )}
                 </div>
 
                 <Button
