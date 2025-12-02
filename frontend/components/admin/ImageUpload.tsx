@@ -220,7 +220,7 @@ export default function ImageUpload({ images, onChange, maxImages = 5, onUpload 
                 {/* Remove Button */}
                 <button
                   onClick={() => removeImage(idx)}
-                  className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110 shadow-lg"
+                  className="absolute top-2 right-2 p-1.5 z-50 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110 shadow-lg"
                 >
                   <X className="w-4 h-4" />
                 </button>

@@ -115,7 +115,7 @@ export default function ModernHomePage() {
   return (
     <div className="min-h-screen bg-[#EAEDED]">
       {/* Hero Banner Section */}
-      <section className="relative h-[250px] md:h-[600px]  overflow-hidden">
+      <section className="relative h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[650px] overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(253,0,2,0.2),transparent_50%)] animate-pulse-slow" />
         </div>
