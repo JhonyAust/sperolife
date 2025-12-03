@@ -34,29 +34,43 @@ export default function ModernHomePage() {
   // Filter active banners and sort by position
   const activeBanners = banners?.filter((banner) => banner.isActive)?.sort((a, b) => a.position - b.position) || [];
 
-  useEffect(() => {
-    setIsVisible(true);
-    
-    dispatch(getActiveBanners())
-      .unwrap()
-      .then((response) => {
-        console.log('Banners response:', response);
-      })
-      .catch((error) => {
-        console.error('Banner fetch error:', error);
-      });
-    
-    dispatch(fetchProducts({ page: 1, limit: 50 })).then((res) => {
-      if (res?.payload?.products) {
-        const allProds = res.payload.products;
-        setAllProducts(allProds);
-        
-        setBestSellers(allProds.filter(p => p.isBestSeller).slice(0, 10));
-        setNewArrivals(allProds.filter(p => p.isNewArrival).slice(0, 10));
-        setDiscounts(allProds.filter(p => p.salePrice && p.salePrice < p.price).slice(0, 10));
-      }
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+const [randomizedProducts, setRandomizedProducts] = useState([]);
+
+useEffect(() => {
+  setIsVisible(true);
+  
+  dispatch(getActiveBanners())
+    .unwrap()
+    .then((response) => {
+      console.log('Banners response:', response);
+    })
+    .catch((error) => {
+      console.error('Banner fetch error:', error);
     });
-  }, [dispatch]);
+  
+  dispatch(fetchProducts({ page: 1, limit: 100 })).then((res) => {
+    if (res?.payload?.products) {
+      const allProds = res.payload.products;
+      setAllProducts(allProds);
+      
+      // ✅ Randomize all products on page load
+      setRandomizedProducts(shuffleArray(allProds));
+      
+      setBestSellers(allProds.filter(p => p.isBestSeller));
+      setNewArrivals(allProds.filter(p => p.isNewArrival));
+      setDiscounts(allProds.filter(p => p.salePrice && p.salePrice < p.price));
+    }
+  });
+}, [dispatch]);
 
   // Filter subcategory products based on active tab
   useEffect(() => {
@@ -66,38 +80,49 @@ export default function ModernHomePage() {
   }, [activeTab, bestSellers, newArrivals, discounts, allProducts]);
 
   const filterSubCategoryProducts = () => {
-    let sourceProducts = [];
+  // ✅ Start with ALL products matching the active tab
+  let sourceProducts = [];
 
-    switch (activeTab) {
-      case "bestseller":
-        sourceProducts = bestSellers;
-        break;
-      case "new":
-        sourceProducts = newArrivals;
-        break;
-      case "discount":
-        sourceProducts = discounts;
-        break;
-      default:
-        sourceProducts = allProducts;
-    }
+  switch (activeTab) {
+    case "bestseller":
+      sourceProducts = allProducts.filter(p => p.isBestSeller);
+      break;
+    case "new":
+      sourceProducts = allProducts.filter(p => p.isNewArrival);
+      break;
+    case "discount":
+      sourceProducts = allProducts.filter(p => p.salePrice && p.salePrice < p.price);
+      break;
+    default:
+      sourceProducts = allProducts;
+  }
 
-    const shirts = sourceProducts.filter(p => 
-      p.subCategory?.toLowerCase().includes('shirt')
-    );
-    
-    const shakers = sourceProducts.filter(p => 
-      p.subCategory?.toLowerCase().includes('shacket')
-    );
-    
-    const sneakers = sourceProducts.filter(p => 
-      p.subCategory?.toLowerCase().includes('sneaker')
-    );
+  console.log(`📊 ${activeTab} - Total products:`, sourceProducts.length);
 
-    setShirtsProducts(shirts.slice(0, 5));
-    setShakersProducts(shakers.slice(0, 5));
-    setSneakersProducts(sneakers.slice(0, 5));
-  };
+  // Filter by subcategories
+  const shirts = sourceProducts.filter(p => {
+    const sub = p.subCategory?.toLowerCase() || '';
+    return sub.includes('shirt') && !sub.includes('shacket');
+  });
+  
+  const shakers = sourceProducts.filter(p => {
+    const sub = p.subCategory?.toLowerCase() || '';
+    return sub.includes('shacket');
+  });
+  
+  const sneakers = sourceProducts.filter(p => {
+    const sub = p.subCategory?.toLowerCase() || '';
+    return sub.includes('sneaker');
+  });
+
+  console.log(`👕 Shirts found: ${shirts.length}`);
+  console.log(`🧥 Shackets found: ${shakers.length}`);
+  console.log(`👟 Sneakers found: ${sneakers.length}`);
+
+  setShirtsProducts(shirts.slice(0, 5));
+  setShakersProducts(shakers.slice(0, 5));
+  setSneakersProducts(sneakers.slice(0, 5));
+};
 
   useEffect(() => {
     if (activeBanners.length > 0) {
@@ -360,61 +385,60 @@ export default function ModernHomePage() {
         </section>
       )}
 
-      {/* All Products Grid */}
       <section className="py-8 lg:py-12 bg-[#EAEDED]">
-        <div className="container mx-auto px-4 md:px-8 lg:px-16">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
-              <span className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
-                Complete Collection
-              </span>
-            </div>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
-              Explore Our Full Collection
-            </h2>
+  <div className="container mx-auto px-4 md:px-8 lg:px-16">
+    <div className="text-center mb-8">
+      <div className="flex items-center justify-center gap-3 mb-3">
+        <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
+          Complete Collection
+        </span>
+      </div>
+      <h2 className="text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
+        Explore Our Full Collection
+      </h2>
+    </div>
+
+    {productsLoading ? (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+        {[...Array(10)].map((_, i) => (
+          <div key={i} className="bg-gray-200 rounded-lg h-80 animate-pulse" />
+        ))}
+      </div>
+    ) : randomizedProducts.length > 0 ? (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+        {randomizedProducts.slice(0, 10).map((product, index) => (
+          <div
+            key={product._id}
+            className="animate-fade-in-up"
+            style={{ animationDelay: `${index * 0.03}s` }}
+          >
+            <ProductCard product={product} />
           </div>
+        ))}
+      </div>
+    ) : (
+      <div className="text-center py-16 bg-white rounded-lg">
+        <ShoppingBag className="w-16 h-16 md:w-20 md:h-20 mx-auto text-gray-300 mb-4" />
+        <p className="text-gray-500 text-lg md:text-xl">No products available</p>
+      </div>
+    )}
 
-          {productsLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="bg-gray-200 rounded-lg h-80 animate-pulse" />
-              ))}
-            </div>
-          ) : allProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-              {allProducts.slice(0, 15).map((product, index) => (
-                <div
-                  key={product._id}
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: `${index * 0.03}s` }}
-                >
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 bg-white rounded-lg">
-              <ShoppingBag className="w-16 h-16 md:w-20 md:h-20 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500 text-lg md:text-xl">No products available</p>
-            </div>
-          )}
-
-          {allProducts.length > 15 && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={() => router.push("/products")}
-                className="bg-gradient-to-r from-[#FD0002] to-[#FF6B6B] hover:from-[#FF6B6B] hover:to-[#FD0002] text-white px-6 py-3 md:px-8 md:py-4 rounded-lg font-bold text-sm md:text-base transition-all duration-300 hover:scale-105 group"
-              >
-                <span className="flex items-center gap-2">
-                  View All Products
-                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
+    {randomizedProducts.length > 10 && (
+      <div className="flex justify-center mt-8">
+        <button
+          onClick={() => router.push("/products")}
+          className="bg-gradient-to-r from-[#FD0002] to-[#FF6B6B] hover:from-[#FF6B6B] hover:to-[#FD0002] text-white px-6 py-3 md:px-8 md:py-4 rounded-lg font-bold text-sm md:text-base transition-all duration-300 hover:scale-105 group"
+        >
+          <span className="flex items-center gap-2">
+            View All Products
+            <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </button>
+      </div>
+    )}
+  </div>
+</section>
 
       <style jsx>{`
         @keyframes slide-up {

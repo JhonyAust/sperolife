@@ -65,38 +65,6 @@ export default function ProductContent() {
   const isInitialized = useRef(false);
   const lastFetchParams = useRef(null);
 
-  // Initialize filters from URL parameters
-  useEffect(() => {
-    const category = searchParams.get('category');
-    const subCategory = searchParams.get('subCategory');
-    const search = searchParams.get('search');
-    const featured = searchParams.get('featured');
-    const newArrival = searchParams.get('newArrival');
-    const bestSeller = searchParams.get('bestSeller');
-    const onSale = searchParams.get('onSale');
-    const sort = searchParams.get('sort');
-    const minPrice = searchParams.get('minPrice');
-    const maxPrice = searchParams.get('maxPrice');
-
-    setSelectedCategory(category ? category.toLowerCase() : "");
-    setSelectedSubCategory(subCategory ? subCategory.toLowerCase() : "");
-    setSearchQuery(search || "");
-    setSortBy(sort || "newest");
-    setPriceRange([
-      minPrice ? parseInt(minPrice) : 0,
-      maxPrice ? parseInt(maxPrice) : 50000
-    ]);
-    setQuickFilters({
-      featured: featured === 'true',
-      newArrival: newArrival === 'true',
-      bestSeller: bestSeller === 'true',
-      onSale: onSale === 'true',
-    });
-
-    if (!isInitialized.current) {
-      isInitialized.current = true;
-    }
-  }, [searchParams]);
 
   const categories = [
     { 
@@ -184,51 +152,77 @@ export default function ProductContent() {
     return filtered;
   };
 
-  // Fetch products when filters change
-  useEffect(() => {
-    if (!isInitialized.current) return;
-    fetchProductsData();
-  }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, quickFilters.featured, quickFilters.newArrival, quickFilters.bestSeller]);
+// FIXED: Single useEffect for initialization and fetching
+useEffect(() => {
+  const category = searchParams.get('category');
+  const subCategory = searchParams.get('subCategory');
+  const search = searchParams.get('search');
+  const featured = searchParams.get('featured');
+  const newArrival = searchParams.get('newArrival');
+  const bestSeller = searchParams.get('bestSeller');
+  const onSale = searchParams.get('onSale');
+  const sort = searchParams.get('sort');
+  const minPrice = searchParams.get('minPrice');
+  const maxPrice = searchParams.get('maxPrice');
 
-  const fetchProductsData = () => {
-    const params = {
-      page: 1,
-      limit: 100,
-    };
+  // Update state
+  setSelectedCategory(category ? category.toLowerCase() : "");
+  setSelectedSubCategory(subCategory ? subCategory.toLowerCase() : "");
+  setSearchQuery(search || "");
+  setSortBy(sort || "newest");
+  setPriceRange([
+    minPrice ? parseInt(minPrice) : 0,
+    maxPrice ? parseInt(maxPrice) : 50000
+  ]);
+  setQuickFilters({
+    featured: featured === 'true',
+    newArrival: newArrival === 'true',
+    bestSeller: bestSeller === 'true',
+    onSale: onSale === 'true',
+  });
 
-    if (searchQuery?.trim()) {
-      params.search = searchQuery.trim();
-    }
-    
-    if (selectedCategory) {
-      params.category = selectedCategory;
-    }
-    
-    if (selectedSubCategory) {
-      params.subCategory = selectedSubCategory; 
-    }
-    
-    // Quick filters (except onSale - handled client-side)
-    if (quickFilters.featured) params.isFeatured = 'true';
-    if (quickFilters.newArrival) params.isNewArrival = 'true';
-    if (quickFilters.bestSeller) params.isBestSeller = 'true';
-    
-    // Sorting (except discount - handled client-side)
-    if (sortBy !== "discount") {
-      params.sortBy = getSortField(sortBy);
-      params.order = getSortOrder(sortBy);
-    }
-
-    const paramsString = JSON.stringify(params);
-    if (lastFetchParams.current === paramsString) {
-      return;
-    }
-
-    lastFetchParams.current = paramsString;
-    console.log('📤 Fetching products with params:', params);
-    
-    dispatch(fetchProducts(params));
+  // Build params directly from URL (don't wait for state)
+  const params = {
+    page: 1,
+    limit: 100,
   };
+
+  if (search?.trim()) {
+    params.search = search.trim();
+  }
+  
+  if (category) {
+    params.category = category.toLowerCase();
+  }
+  
+  if (subCategory) {
+    params.subCategory = subCategory.toLowerCase();
+  }
+  
+  // Quick filters (except onSale - handled client-side)
+  if (featured === 'true') params.isFeatured = 'true';
+  if (newArrival === 'true') params.isNewArrival = 'true';
+  if (bestSeller === 'true') params.isBestSeller = 'true';
+  
+  // Sorting (except discount - handled client-side)
+  const sortValue = sort || "newest";
+  if (sortValue !== "discount") {
+    params.sortBy = getSortField(sortValue);
+    params.order = getSortOrder(sortValue);
+  }
+
+  const paramsString = JSON.stringify(params);
+  if (lastFetchParams.current === paramsString) {
+    return;
+  }
+
+  lastFetchParams.current = paramsString;
+  console.log('📤 Fetching products with params:', params);
+  
+  dispatch(fetchProducts(params));
+}, [searchParams, dispatch]); // Only depend on searchParams
+
+// Remove the old separate initialization and fetching useEffects
 
   const clearAllFilters = () => {
     setSelectedCategory("");
