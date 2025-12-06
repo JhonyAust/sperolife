@@ -32,6 +32,7 @@ export default function AdminBannerModal({
     textColor: '#ffffff',
     buttonColor: '#FD0002',
     isActive: true,
+    isMobile: true,
     startDate: '',
     endDate: '',
   });
@@ -56,6 +57,7 @@ export default function AdminBannerModal({
         textColor: banner.textColor || '#ffffff',
         buttonColor: banner.buttonColor || '#FD0002',
         isActive: banner.isActive ?? true,
+        isMobile: banner.isMobile ?? true,
         startDate: banner.startDate ? new Date(banner.startDate).toISOString().split('T')[0] : '',
         endDate: banner.endDate ? new Date(banner.endDate).toISOString().split('T')[0] : '',
       });
@@ -73,6 +75,7 @@ export default function AdminBannerModal({
         textColor: '#ffffff',
         buttonColor: '#FD0002',
         isActive: true,
+        isMobile: true,
         startDate: '',
         endDate: '',
       });
@@ -415,6 +418,18 @@ export default function AdminBannerModal({
               Banner is Active
             </label>
           </div>
+          <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="isMobile"
+            checked={formData.isMobile}
+            onChange={(e) => setFormData(prev => ({ ...prev, isMobile: e.target.checked }))}
+            className="w-6 h-6 rounded-lg border-2 border-gray-300 text-purple-600 focus:ring-2 focus:ring-purple-500"
+          />
+          <label htmlFor="isMobile" className="text-sm font-bold text-gray-900 cursor-pointer">
+            Show on Mobile Devices
+          </label>
+        </div>
 
           {/* Actions */}
           <div className="flex gap-4 pt-6 border-t border-gray-200">

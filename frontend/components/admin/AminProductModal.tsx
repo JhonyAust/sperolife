@@ -32,6 +32,7 @@ interface ProductFormData {
   isFeatured: boolean;
   isNewArrival: boolean;
   isBestSeller: boolean;
+  isHotDeals: boolean;
   weight: string;
   metaTitle: string;
   metaDescription: string;
@@ -50,12 +51,12 @@ const categories = [
   { 
     name: "Men", 
     value: "men",
-    subcategories: ["Shirts", "T-Shirts", "Shacket", "Jackets", "Hoodies", "Pants", "Jeans", "Shoes"]
+    subcategories: ["Shirts", "T-Shirts", "Shacket", "Jackets", "Hoodies", "Pants", "Jeans", "Shoes","Combo"]
   },
   { 
     name: "Women", 
     value: "women",
-    subcategories: ["Dresses", "Tops", "Pants", "Skirts", "Jackets", "Shoes", "Bags"]
+    subcategories: ["Dresses", "Tops", "Pants", "Skirts", "Jackets", "Shoes", "Bags","Combo"]
   },
   { 
     name: "Kids", 
@@ -101,6 +102,7 @@ export default function AdminProductModal({
     isFeatured: false,
     isNewArrival: false,
     isBestSeller: false,
+    isHotDeals: false,
     weight: '',
     metaTitle: '',
     metaDescription: '',
@@ -157,6 +159,7 @@ export default function AdminProductModal({
         isFeatured: product.isFeatured || false,
         isNewArrival: product.isNewArrival || false,
         isBestSeller: product.isBestSeller || false,
+        isHotDeals: product.isHotDeals || false,
         weight: product.weight?.toString() || '',
         metaTitle: product.metaTitle || '',
         metaDescription: product.metaDescription || '',
@@ -182,6 +185,7 @@ export default function AdminProductModal({
         isFeatured: false,
         isNewArrival: false,
         isBestSeller: false,
+        isHotDeals: false,
         weight: '',
         metaTitle: '',
         metaDescription: '',
@@ -322,6 +326,7 @@ useEffect(() => {
       isFeatured: formData.isFeatured,
       isNewArrival: formData.isNewArrival,
       isBestSeller: formData.isBestSeller,
+      isHotDeals: formData.isHotDeals,
       weight: formData.weight ? parseFloat(formData.weight) : undefined,
       metaTitle: formData.metaTitle || undefined,
       metaDescription: formData.metaDescription || undefined,
@@ -595,6 +600,17 @@ useEffect(() => {
                       🔥 Best Seller
                     </span>
                   </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={formData.isHotDeals}
+                    onChange={(e) => setFormData({ ...formData, isHotDeals: e.target.checked })}
+                    className="w-5 h-5 text-purple-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                  />
+                  <span className="font-semibold text-gray-700 group-hover:text-purple-600 transition-colors">
+                    💥 Hot Deals
+                  </span>
+                </label>
                 </div>
               </div>
             </div>

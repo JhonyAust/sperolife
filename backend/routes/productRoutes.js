@@ -12,6 +12,7 @@ const {
     getBestSellers,
     getNewArrivals,
     getProductsOnSale,
+    getHotDeals,
 } = require('../controllers/productController');
 
 // ============================================================================
@@ -30,6 +31,8 @@ router.get('/bestsellers', getBestSellers);
 // Get new arrivals
 router.get('/new-arrivals', getNewArrivals);
 
+router.get('/products/hot-deals', getHotDeals);
+
 // Get products on sale
 router.get('/on-sale', getProductsOnSale);
 
@@ -46,6 +49,7 @@ router.get('/:slug', getProductBySlug);
 
 // Get related products
 router.get('/:id/related', getRelatedProducts);
+
 
 
 

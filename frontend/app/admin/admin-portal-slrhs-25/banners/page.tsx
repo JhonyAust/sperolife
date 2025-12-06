@@ -400,6 +400,14 @@ export default function AdminBannersPage() {
                       {banner.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       {banner.isActive ? 'Deactivate' : 'Activate'}
                     </button>
+                    {banner.isMobile && (
+                      <div className="px-3 py-1.5 bg-blue-500 text-white rounded-full text-xs font-bold flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Mobile
+                      </div>
+                    )}
                     <button
                       onClick={() => handleEdit(banner)}
                       className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 rounded-xl font-bold hover:bg-blue-200 transition-colors flex items-center justify-center gap-2"

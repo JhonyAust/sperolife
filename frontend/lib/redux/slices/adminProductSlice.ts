@@ -34,6 +34,7 @@ interface Product {
   isFeatured?: boolean;
   isNewArrival?: boolean;
   isBestSeller?: boolean;
+  isHotDeals?: boolean;
   views?: number;
   sales?: number;
   discountPercentage?: number;

@@ -44,7 +44,6 @@ const productSchema = new mongoose.Schema(
       lowercase: true,
       index: true,
     },
-    // SKU for products without size variants
     sku: {
       type: String,
       trim: true,
@@ -100,21 +99,18 @@ const productSchema = new mongoose.Schema(
       trim: true,
       validate: {
         validator: function(value) {
-          if (!value) return true; // Allow empty
-          // Validate YouTube URL format
+          if (!value) return true;
           const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
           return youtubeRegex.test(value);
         },
         message: 'Please provide a valid YouTube URL'
       }
-      },
-    // Enhanced: Size variants
+    },
     hasSizeVariants: {
       type: Boolean,
       default: false,
     },
     sizeVariants: [sizeVariantSchema],
-    // Standard stock (used when no size variants)
     stock: {
       type: Number,
       min: [0, 'Stock cannot be negative'],
@@ -164,6 +160,12 @@ const productSchema = new mongoose.Schema(
     isBestSeller: {
       type: Boolean,
       default: false,
+    },
+    // ✅ NEW: Hot Deals flag
+    isHotDeals: {
+      type: Boolean,
+      default: false,
+      index: true, // Index for efficient querying
     },
     views: {
       type: Number,
@@ -246,7 +248,6 @@ function generateSKU(prefix, category, uniqueId) {
 
 // Pre-save middleware to generate slug and SKU
 productSchema.pre('save', async function (next) {
-  // Generate slug if name is modified
   if (this.isModified('name')) {
     this.slug = this.name
       .toLowerCase()
@@ -254,8 +255,7 @@ productSchema.pre('save', async function (next) {
       .replace(/(^-|-$)/g, '');
   }
 
-  // Generate SKU for products without size variants ONLY IF NOT PROVIDED
-  if (!this.hasSizeVariants && !this.sku) { // CHANGED: Added !this.sku check
+  if (!this.hasSizeVariants && !this.sku) {
     const basePrefix = this.brand ? this.brand.substring(0, 3).toUpperCase() : 'PRD';
     let attempt = 0;
     let skuGenerated = false;
@@ -273,7 +273,6 @@ productSchema.pre('save', async function (next) {
     }
   }
 
-  // Generate SKU for size variants - keep existing logic
   if (this.hasSizeVariants && this.sizeVariants && this.sizeVariants.length > 0) {
     const basePrefix = this.brand ? this.brand.substring(0, 3).toUpperCase() : 'PRD';
     
@@ -318,6 +317,13 @@ productSchema.statics.getFeatured = function (limit = 10) {
     .limit(limit);
 };
 
+// ✅ NEW: Static method to get hot deals
+productSchema.statics.getHotDeals = function (limit = 10) {
+  return this.find({ isHotDeals: true, isActive: true })
+    .sort({ discountPercentage: -1, createdAt: -1 })
+    .limit(limit);
+};
+
 // Instance method to check if product is on sale
 productSchema.methods.isOnSale = function () {
   return this.salePrice && this.salePrice < this.price;
@@ -325,11 +331,9 @@ productSchema.methods.isOnSale = function () {
 
 // Static method to find product by SKU
 productSchema.statics.findBySKU = async function (sku) {
-  // Check in main products
   const product = await this.findOne({ sku });
   if (product) return product;
 
-  // Check in size variants
   return await this.findOne({ 'sizeVariants.sku': sku });
 };
 

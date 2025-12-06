@@ -13,6 +13,7 @@ interface Banner {
   linkText?: string;
   position: number;
   isActive: boolean;
+  isMobile: boolean;  
   startDate?: string;
   endDate?: string;
   backgroundColor?: string;
@@ -38,12 +39,14 @@ const initialState: BannerState = {
 // ASYNC THUNKS
 // ============================================================================
 
-// Get active banners
+// Get active banners - UPDATED to accept device parameter
 export const getActiveBanners = createAsyncThunk(
   "banner/getActive",
-  async (_, { rejectWithValue }) => {
+  async (device?: 'mobile' | 'desktop', { rejectWithValue }) => {
     try {
-      const { data } = await api.get("/banners");
+      // Add device query parameter if provided
+      const params = device ? { device } : {};
+      const { data } = await api.get("/banners", { params });
       return data;
     } catch (error: any) {
       return rejectWithValue(
@@ -78,6 +81,11 @@ const bannerSlice = createSlice({
   reducers: {
     clearError: (state) => {
       state.error = null;
+    },
+    // ADD: Filter banners by device on frontend
+    filterBannersByDevice: (state, action: PayloadAction<'mobile' | 'desktop' | 'all'>) => {
+      // This is a client-side filter if you want to filter after fetching all banners
+      // Not necessary if you're using the backend device parameter
     },
   },
   extraReducers: (builder) => {
@@ -114,5 +122,5 @@ const bannerSlice = createSlice({
   },
 });
 
-export const { clearError } = bannerSlice.actions;
+export const { clearError, filterBannersByDevice } = bannerSlice.actions;
 export default bannerSlice.reducer;

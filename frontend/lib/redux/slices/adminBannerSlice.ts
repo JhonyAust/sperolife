@@ -13,6 +13,7 @@ interface Banner {
   linkText?: string;
   position: number;
   isActive: boolean;
+  isMobile: boolean;
   startDate?: string;
   endDate?: string;
   backgroundColor?: string;

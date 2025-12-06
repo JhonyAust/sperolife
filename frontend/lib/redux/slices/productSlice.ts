@@ -33,6 +33,7 @@ interface Product {
   isFeatured: boolean;
   isNewArrival: boolean;
   isBestSeller: boolean;
+  isHotDeals?: boolean;
   views: number;
   sales: number;
   weight?: number;
@@ -50,6 +51,7 @@ interface Product {
 interface ProductState {
   products: Product[];
   featuredProducts: Product[];
+  hotDealsProducts: Product[];
   selectedProduct: Product | null;
   loading: boolean;
   error: string | null;
@@ -71,6 +73,7 @@ interface ProductState {
 const initialState: ProductState = {
   products: [],
   featuredProducts: [],
+  hotDealsProducts: [],
   selectedProduct: null,
   loading: false,
   error: null,
@@ -93,6 +96,21 @@ const initialState: ProductState = {
 // ASYNC THUNKS
 // ============================================================================
 
+
+export const fetchHotDeals = createAsyncThunk(
+  "products/fetchHotDeals",
+  async (limit: number = 10, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(`/products/hot-deals?limit=${limit}`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch hot deals"
+      );
+    }
+  }
+);
+
 // Get all products (with filters)
 export const fetchProducts = createAsyncThunk(
   "products/fetchAll",
@@ -110,6 +128,7 @@ export const fetchProducts = createAsyncThunk(
       isFeatured?: boolean | string;
       isNewArrival?: boolean | string;
       isBestSeller?: boolean | string;
+      isHotDeals?: boolean | string;
     } = {},
     { rejectWithValue }
   ) => {
@@ -128,6 +147,7 @@ export const fetchProducts = createAsyncThunk(
       if (params.isFeatured) queryParams.append("isFeatured", "true");
       if (params.isNewArrival) queryParams.append("isNewArrival", "true");
       if (params.isBestSeller) queryParams.append("isBestSeller", "true");
+      if (params.isHotDeals) queryParams.append("isHotDeals", "true");
 
       const url = `/products?${queryParams.toString()}`;
       console.log('🔗 Fetching products from:', url);
@@ -320,6 +340,20 @@ const productSlice = createSlice({
         state.featuredProducts = action.payload.products || [];
       })
       .addCase(fetchFeaturedProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+       builder
+      .addCase(fetchHotDeals.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchHotDeals.fulfilled, (state, action) => {
+        state.loading = false;
+        state.hotDealsProducts = action.payload.products || [];
+      })
+      .addCase(fetchHotDeals.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

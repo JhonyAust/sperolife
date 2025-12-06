@@ -59,23 +59,22 @@ export default function ProductContent() {
     newArrival: false,
     bestSeller: false,
     onSale: false,
+    hotDeals: false,
   });
 
   // FIXED: Use ref to prevent duplicate API calls
-  const isInitialized = useRef(false);
   const lastFetchParams = useRef(null);
-
 
   const categories = [
     { 
       name: "Men", 
       value: "men",
-      subcategories: ["Shirts", "T-Shirts", "Shacket", "Jackets", "Hoodies", "Pants", "Jeans", "Shoes"]
+      subcategories: ["Shirts", "T-Shirts", "Shacket", "Jackets", "Hoodies", "Pants", "Jeans", "Shoes", "Combo"]
     },
     { 
       name: "Women", 
       value: "women",
-      subcategories: ["Dresses", "Tops", "Pants", "Skirts", "Jackets", "Shoes", "Bags"]
+      subcategories: ["Dresses", "Tops", "Pants", "Skirts", "Jackets", "Shoes", "Bags","Combo"]
     },
     { 
       name: "Kids", 
@@ -100,7 +99,7 @@ export default function ProductContent() {
     { label: "Price: High to Low", value: "price_desc", icon: <TrendingDown className="w-4 h-4" /> },
     { label: "Most Popular", value: "popular", icon: <Star className="w-4 h-4" /> },
     { label: "Best Rating", value: "rating", icon: <Sparkles className="w-4 h-4" /> },
-    { label: "Biggest Discount", value: "discount", icon: <Percent className="w-4 h-4" /> }, // NEW
+    { label: "Biggest Discount", value: "discount", icon: <Percent className="w-4 h-4" /> },
   ];
 
   const availableSubcategories = categories.find(
@@ -114,13 +113,72 @@ export default function ProductContent() {
       price_desc: "price",
       popular: "sales",
       rating: "rating",
-      discount: "discount", // NEW
+      discount: "discount",
     };
     return sortMap[sort] || "createdAt";
   };
 
   const getSortOrder = (sort) => {
     return sort === "price_asc" ? "asc" : "desc";
+  };
+
+  // ✅ Function to update URL with current filters
+  const updateURL = (updates = {}) => {
+    const params = new URLSearchParams(searchParams);
+    
+    // Remove all filter params first
+    params.delete('category');
+    params.delete('subCategory');
+    params.delete('minPrice');
+    params.delete('maxPrice');
+    params.delete('featured');
+    params.delete('newArrival');
+    params.delete('bestSeller');
+    params.delete('hotDeals');
+    params.delete('onSale');
+    params.delete('sort');
+    
+    // Apply current filters with updates
+    const finalCategory = updates.category !== undefined ? updates.category : selectedCategory;
+    const finalSubCategory = updates.subCategory !== undefined ? updates.subCategory : selectedSubCategory;
+    const finalSortBy = updates.sortBy !== undefined ? updates.sortBy : sortBy;
+    const finalPriceRange = updates.priceRange !== undefined ? updates.priceRange : priceRange;
+    const finalQuickFilters = updates.quickFilters !== undefined ? updates.quickFilters : quickFilters;
+    
+    if (finalCategory) {
+      params.set('category', finalCategory);
+    }
+    if (finalSubCategory) {
+      params.set('subCategory', finalSubCategory);
+    }
+    if (finalSortBy) {
+      params.set('sort', finalSortBy);
+    }
+    
+    // Price range
+    if (finalPriceRange[0] > 0) {
+      params.set('minPrice', finalPriceRange[0].toString());
+    }
+    if (finalPriceRange[1] < 50000) {
+      params.set('maxPrice', finalPriceRange[1].toString());
+    }
+    
+    // Quick filters
+    if (finalQuickFilters.featured) params.set('featured', 'true');
+    if (finalQuickFilters.newArrival) params.set('newArrival', 'true');
+    if (finalQuickFilters.bestSeller) params.set('bestSeller', 'true');
+    if (finalQuickFilters.onSale) params.set('onSale', 'true');
+    if (finalQuickFilters.hotDeals) params.set('hotDeals', 'true');
+    
+    // Keep search param if exists
+    const search = searchParams.get('search');
+    if (search) {
+      params.set('search', search);
+    }
+    
+    const queryString = params.toString();
+    const newUrl = queryString ? `/products?${queryString}` : '/products';
+    router.replace(newUrl, { scroll: false });
   };
 
   // ✅ FIXED: Client-side filtering to handle sale products properly
@@ -133,6 +191,9 @@ export default function ProductContent() {
         product.salePrice && product.salePrice < product.price
       );
     }
+    if (quickFilters.hotDeals) {
+    filtered = filtered.filter(product => product.isHotDeals === true);
+  }
 
     // Apply client-side price range filter using effective price (salePrice or regular price)
     filtered = filtered.filter(product => {
@@ -152,84 +213,85 @@ export default function ProductContent() {
     return filtered;
   };
 
-// FIXED: Single useEffect for initialization and fetching
-useEffect(() => {
-  const category = searchParams.get('category');
-  const subCategory = searchParams.get('subCategory');
-  const search = searchParams.get('search');
-  const featured = searchParams.get('featured');
-  const newArrival = searchParams.get('newArrival');
-  const bestSeller = searchParams.get('bestSeller');
-  const onSale = searchParams.get('onSale');
-  const sort = searchParams.get('sort');
-  const minPrice = searchParams.get('minPrice');
-  const maxPrice = searchParams.get('maxPrice');
+  // ✅ FIXED: Single useEffect for initialization and fetching
+  useEffect(() => {
+    const category = searchParams.get('category');
+    const subCategory = searchParams.get('subCategory');
+    const search = searchParams.get('search');
+    const featured = searchParams.get('featured');
+    const newArrival = searchParams.get('newArrival');
+    const bestSeller = searchParams.get('bestSeller');
+    const hotDeals = searchParams.get('hotDeals');
+    const onSale = searchParams.get('onSale');
+    const sort = searchParams.get('sort');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
 
-  // Update state
-  setSelectedCategory(category ? category.toLowerCase() : "");
-  setSelectedSubCategory(subCategory ? subCategory.toLowerCase() : "");
-  setSearchQuery(search || "");
-  setSortBy(sort || "newest");
-  setPriceRange([
-    minPrice ? parseInt(minPrice) : 0,
-    maxPrice ? parseInt(maxPrice) : 50000
-  ]);
-  setQuickFilters({
-    featured: featured === 'true',
-    newArrival: newArrival === 'true',
-    bestSeller: bestSeller === 'true',
-    onSale: onSale === 'true',
-  });
+    // Update state
+    setSelectedCategory(category ? category.toLowerCase() : "");
+    setSelectedSubCategory(subCategory ? subCategory.toLowerCase() : "");
+    setSearchQuery(search || "");
+    setSortBy(sort || "newest");
+    setPriceRange([
+      minPrice ? parseInt(minPrice) : 0,
+      maxPrice ? parseInt(maxPrice) : 50000
+    ]);
+    setQuickFilters({
+      featured: featured === 'true',
+      newArrival: newArrival === 'true',
+      bestSeller: bestSeller === 'true',
+      onSale: onSale === 'true',
+       hotDeals: hotDeals === 'true',
+    });
 
-  // Build params directly from URL (don't wait for state)
-  const params = {
-    page: 1,
-    limit: 100,
-  };
+    // Build params directly from URL (don't wait for state)
+    const params = {
+      page: 1,
+      limit: 100,
+    };
 
-  if (search?.trim()) {
-    params.search = search.trim();
-  }
-  
-  if (category) {
-    params.category = category.toLowerCase();
-  }
-  
-  if (subCategory) {
-    params.subCategory = subCategory.toLowerCase();
-  }
-  
-  // Quick filters (except onSale - handled client-side)
-  if (featured === 'true') params.isFeatured = 'true';
-  if (newArrival === 'true') params.isNewArrival = 'true';
-  if (bestSeller === 'true') params.isBestSeller = 'true';
-  
-  // Sorting (except discount - handled client-side)
-  const sortValue = sort || "newest";
-  if (sortValue !== "discount") {
-    params.sortBy = getSortField(sortValue);
-    params.order = getSortOrder(sortValue);
-  }
+    if (search?.trim()) {
+      params.search = search.trim();
+    }
+    
+    if (category) {
+      params.category = category.toLowerCase();
+    }
+    
+    if (subCategory) {
+      params.subCategory = subCategory.toLowerCase();
+    }
+    
+    // Quick filters (except onSale - handled client-side)
+    if (featured === 'true') params.isFeatured = 'true';
+    if (newArrival === 'true') params.isNewArrival = 'true';
+    if (bestSeller === 'true') params.isBestSeller = 'true';
+    if (hotDeals === 'true') params.isHotDeals = 'true';
+    
+    // Sorting (except discount - handled client-side)
+    const sortValue = sort || "newest";
+    if (sortValue !== "discount") {
+      params.sortBy = getSortField(sortValue);
+      params.order = getSortOrder(sortValue);
+    }
 
-  const paramsString = JSON.stringify(params);
-  if (lastFetchParams.current === paramsString) {
-    return;
-  }
+    const paramsString = JSON.stringify(params);
+    if (lastFetchParams.current === paramsString) {
+      return;
+    }
 
-  lastFetchParams.current = paramsString;
-  console.log('📤 Fetching products with params:', params);
-  
-  dispatch(fetchProducts(params));
-}, [searchParams, dispatch]); // Only depend on searchParams
-
-// Remove the old separate initialization and fetching useEffects
+    lastFetchParams.current = paramsString;
+    console.log('📤 Fetching products with params:', params);
+    
+    dispatch(fetchProducts(params));
+  }, [searchParams, dispatch]);
 
   const clearAllFilters = () => {
     setSelectedCategory("");
     setSelectedSubCategory("");
     setPriceRange([0, 50000]);
     setSortBy("newest");
-    setQuickFilters({ featured: false, newArrival: false, bestSeller: false, onSale: false });
+    setQuickFilters({ featured: false, newArrival: false, bestSeller: false, onSale: false ,hotDeals: false  });
     
     const search = searchParams.get('search');
     const params = new URLSearchParams();
@@ -254,7 +316,7 @@ useEffect(() => {
 
   // ✅ Calculate sale stats
   const saleProductsCount = displayProducts.filter(p => p.salePrice && p.salePrice < p.price).length;
-
+  const hotDealsCount = displayProducts.filter(p => p.isHotDeals).length;
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Animated Background */}
@@ -325,7 +387,10 @@ useEffect(() => {
                 {sortOptions.map((option) => (
                   <button 
                     key={option.value} 
-                    onClick={() => setSortBy(option.value)} 
+                    onClick={() => {
+                      setSortBy(option.value);
+                      updateURL({ sortBy: option.value });
+                    }} 
                     className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                       sortBy === option.value ? "bg-[#FD0002]/5 text-[#FD0002]" : "text-gray-700"
                     }`}
@@ -344,32 +409,59 @@ useEffect(() => {
             <div className="flex items-center gap-2 flex-wrap">
               <QuickFilterChip 
                 active={quickFilters.featured} 
-                onClick={() => setQuickFilters({ ...quickFilters, featured: !quickFilters.featured })} 
+                onClick={() => {
+                  const newFilters = { ...quickFilters, featured: !quickFilters.featured };
+                  setQuickFilters(newFilters);
+                  updateURL({ quickFilters: newFilters });
+                }} 
                 icon={<Sparkles className="w-4 h-4" />} 
                 label="Featured" 
                 color="purple" 
               />
               <QuickFilterChip 
                 active={quickFilters.newArrival} 
-                onClick={() => setQuickFilters({ ...quickFilters, newArrival: !quickFilters.newArrival })} 
+                onClick={() => {
+                  const newFilters = { ...quickFilters, newArrival: !quickFilters.newArrival };
+                  setQuickFilters(newFilters);
+                  updateURL({ quickFilters: newFilters });
+                }} 
                 icon={<Zap className="w-4 h-4" />} 
                 label="New" 
                 color="blue" 
               />
               <QuickFilterChip 
                 active={quickFilters.bestSeller} 
-                onClick={() => setQuickFilters({ ...quickFilters, bestSeller: !quickFilters.bestSeller })} 
+                onClick={() => {
+                  const newFilters = { ...quickFilters, bestSeller: !quickFilters.bestSeller };
+                  setQuickFilters(newFilters);
+                  updateURL({ quickFilters: newFilters });
+                }} 
                 icon={<Star className="w-4 h-4" />} 
                 label="Best Seller" 
                 color="amber" 
               />
               <QuickFilterChip 
                 active={quickFilters.onSale} 
-                onClick={() => setQuickFilters({ ...quickFilters, onSale: !quickFilters.onSale })} 
+                onClick={() => {
+                  const newFilters = { ...quickFilters, onSale: !quickFilters.onSale };
+                  setQuickFilters(newFilters);
+                  updateURL({ quickFilters: newFilters });
+                }} 
                 icon={<Tag className="w-4 h-4" />} 
                 label={`On Sale ${saleProductsCount > 0 ? `(${saleProductsCount})` : ''}`}
                 color="red" 
               />
+              <QuickFilterChip 
+              active={quickFilters.hotDeals} 
+              onClick={() => {
+                const newFilters = { ...quickFilters, hotDeals: !quickFilters.hotDeals };
+                setQuickFilters(newFilters);
+                updateURL({ quickFilters: newFilters });
+              }} 
+              icon={<Sparkles className="w-4 h-4" />} 
+              label={`Hot Deals ${hotDealsCount > 0 ? `(${hotDealsCount})` : ''}`}
+              color="orange" 
+            />
             </div>
           </div>
 
@@ -388,19 +480,26 @@ useEffect(() => {
                   onRemove={() => { 
                     setSelectedCategory(""); 
                     setSelectedSubCategory(""); 
+                    updateURL({ category: '', subCategory: '' });
                   }} 
                 />
               )}
               {selectedSubCategory && (
                 <FilterTag 
                   label={selectedSubCategory} 
-                  onRemove={() => setSelectedSubCategory("")} 
+                  onRemove={() => {
+                    setSelectedSubCategory("");
+                    updateURL({ subCategory: '' });
+                  }} 
                 />
               )}
               {(priceRange[0] > 0 || priceRange[1] < 50000) && (
                 <FilterTag 
                   label={`৳${priceRange[0]} - ৳${priceRange[1]}`}
-                  onRemove={() => setPriceRange([0, 50000])} 
+                  onRemove={() => {
+                    setPriceRange([0, 50000]);
+                    updateURL({ priceRange: [0, 50000] });
+                  }} 
                 />
               )}
               {Object.entries(quickFilters).map(([key, value]) => 
@@ -408,7 +507,11 @@ useEffect(() => {
                   <FilterTag 
                     key={key} 
                     label={key.replace(/([A-Z])/g, " $1").trim()} 
-                    onRemove={() => setQuickFilters({ ...quickFilters, [key]: false })} 
+                    onRemove={() => {
+                      const newFilters = { ...quickFilters, [key]: false };
+                      setQuickFilters(newFilters);
+                      updateURL({ quickFilters: newFilters });
+                    }} 
                   />
                 )
               )}
@@ -444,6 +547,7 @@ useEffect(() => {
                         onClick={() => { 
                           setSelectedCategory(cat.value); 
                           setSelectedSubCategory(""); 
+                          updateURL({ category: cat.value, subCategory: '' });
                         }} 
                         className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${
                           selectedCategory === cat.value 
@@ -469,7 +573,10 @@ useEffect(() => {
                       {availableSubcategories.map((sub) => (
                         <button 
                           key={sub} 
-                          onClick={() => setSelectedSubCategory(sub.toLowerCase())} 
+                          onClick={() => {
+                            setSelectedSubCategory(sub.toLowerCase());
+                            updateURL({ subCategory: sub.toLowerCase() });
+                          }} 
                           className={`w-full text-left px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
                             selectedSubCategory === sub.toLowerCase() 
                               ? "bg-[#FD0002]/10 text-[#FD0002] border-2 border-[#FD0002]" 
@@ -510,6 +617,8 @@ useEffect(() => {
                       step="500" 
                       value={priceRange[1]} 
                       onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])} 
+                      onMouseUp={() => updateURL({ priceRange })}
+                      onTouchEnd={() => updateURL({ priceRange })}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FD0002]" 
                     />
                     <div className="grid grid-cols-2 gap-3">
@@ -517,6 +626,7 @@ useEffect(() => {
                         type="number" 
                         value={priceRange[0]} 
                         onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])} 
+                        onBlur={() => updateURL({ priceRange })}
                         className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium focus:border-[#FD0002] focus:ring-2 focus:ring-[#FD0002]/20 outline-none text-gray-900" 
                         placeholder="Min" 
                       />
@@ -524,6 +634,7 @@ useEffect(() => {
                         type="number" 
                         value={priceRange[1]} 
                         onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 50000])} 
+                        onBlur={() => updateURL({ priceRange })}
                         className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium focus:border-[#FD0002] focus:ring-2 focus:ring-[#FD0002]/20 outline-none text-gray-900" 
                         placeholder="Max" 
                       />
@@ -546,17 +657,22 @@ useEffect(() => {
                       : "All Products"}
                 </h1>
                 <p className="text-sm text-gray-600 font-medium">
-                  {loading ? "Loading products..." : (
-                    <>
-                      {productsCount} products available
-                      {saleProductsCount > 0 && (
-                        <span className="ml-2 text-red-600 font-bold">
-                          • {saleProductsCount} on sale
-                        </span>
-                      )}
-                    </>
+              {loading ? "Loading products..." : (
+                <>
+                  {productsCount} products available
+                  {saleProductsCount > 0 && (
+                    <span className="ml-2 text-red-600 font-bold">
+                      • {saleProductsCount} on sale
+                    </span>
                   )}
-                </p>
+                  {hotDealsCount > 0 && (
+                    <span className="ml-2 text-orange-600 font-bold">
+                      • {hotDealsCount} hot deals
+                    </span>
+                  )}
+                </>
+              )}
+            </p>
               </div>
             </div>
 
@@ -809,6 +925,7 @@ function QuickFilterChip({ active, onClick, icon, label, color }) {
     blue: "from-blue-500 to-blue-600 border-blue-400",
     amber: "from-amber-500 to-amber-600 border-amber-400",
     red: "from-red-500 to-red-600 border-red-400",
+    orange: "from-orange-500 to-orange-600 border-orange-400",
   };
 
   const inactiveColors = {
@@ -816,6 +933,7 @@ function QuickFilterChip({ active, onClick, icon, label, color }) {
     blue: "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100",
     amber: "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100",
     red: "border-red-200 bg-red-50 text-red-700 hover:bg-red-100",
+    orange: "border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100",
   };
 
   return (

@@ -16,11 +16,12 @@ export default function ModernHomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTab, setActiveTab] = useState("new");
   const [isVisible, setIsVisible] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false); // ADD THIS
   const [allProducts, setAllProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [discounts, setDiscounts] = useState([]);
-  
+  const [hotDeals, setHotDeals] = useState([]);
   // SubCategory filtered products
   const [shirtsProducts, setShirtsProducts] = useState([]);
   const [shakersProducts, setShakersProducts] = useState([]);
@@ -31,46 +32,86 @@ export default function ModernHomePage() {
   const { user } = useSelector((state) => state.auth || { user: null });
   const { product, loading: productsLoading } = useSelector((state) => state.product || { products: [], loading: false });
 
-  // Filter active banners and sort by position
-  const activeBanners = banners?.filter((banner) => banner.isActive)?.sort((a, b) => a.position - b.position) || [];
+  // ✅ UPDATED: Filter banners based on device type and isMobile field
+  const activeBanners = React.useMemo(() => {
+    if (!banners || banners.length === 0) return [];
+    
+    return banners
+      .filter((banner) => {
+        // Must be active
+        if (!banner.isActive) return false;
+        
+        // Logic: isMobile controls which device the banner appears on
+        // - If isMobile=true: ONLY show on mobile devices
+        // - If isMobile=false: ONLY show on desktop/laptop
+        if (isMobileDevice) {
+          // On mobile: only show banners with isMobile=true
+          return banner.isMobile === true;
+        } else {
+          // On desktop: only show banners with isMobile=false
+          return banner.isMobile === false;
+        }
+      })
+      .sort((a, b) => a.position - b.position);
+  }, [banners, isMobileDevice]);
 
-const shuffleArray = (array) => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
-
-const [randomizedProducts, setRandomizedProducts] = useState([]);
-
-useEffect(() => {
-  setIsVisible(true);
-  
-  dispatch(getActiveBanners())
-    .unwrap()
-    .then((response) => {
-      console.log('Banners response:', response);
-    })
-    .catch((error) => {
-      console.error('Banner fetch error:', error);
-    });
-  
-  dispatch(fetchProducts({ page: 1, limit: 100 })).then((res) => {
-    if (res?.payload?.products) {
-      const allProds = res.payload.products;
-      setAllProducts(allProds);
-      
-      // ✅ Randomize all products on page load
-      setRandomizedProducts(shuffleArray(allProds));
-      
-      setBestSellers(allProds.filter(p => p.isBestSeller));
-      setNewArrivals(allProds.filter(p => p.isNewArrival));
-      setDiscounts(allProds.filter(p => p.salePrice && p.salePrice < p.price));
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-  });
-}, [dispatch]);
+    return shuffled;
+  };
+
+  const [randomizedProducts, setRandomizedProducts] = useState([]);
+
+  // ✅ ADD: Detect device type on mount
+  useEffect(() => {
+    // Detect if mobile device
+    const checkMobile = () => {
+      if (typeof window !== 'undefined') {
+        const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        setIsMobileDevice(mobile);
+        console.log('🔍 Device detection:', mobile ? 'Mobile' : 'Desktop');
+      }
+    };
+
+    checkMobile();
+    
+    // Optional: Re-check on resize (for responsive testing)
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    setIsVisible(true);
+    
+    // ✅ UPDATED: Fetch banners with device parameter
+    dispatch(getActiveBanners(isMobileDevice ? 'mobile' : undefined))
+      .unwrap()
+      .then((response) => {
+        console.log('✅ Banners response:', response);
+        console.log(`📱 Showing ${response.data?.length || 0} banners for ${isMobileDevice ? 'mobile' : 'desktop'}`);
+      })
+      .catch((error) => {
+        console.error('❌ Banner fetch error:', error);
+      });
+    
+    dispatch(fetchProducts({ page: 1, limit: 100 })).then((res) => {
+      if (res?.payload?.products) {
+        const allProds = res.payload.products;
+        setAllProducts(allProds);
+        
+        // ✅ Randomize all products on page load
+        setRandomizedProducts(shuffleArray(allProds));
+        
+        setBestSellers(allProds.filter(p => p.isBestSeller));
+        setNewArrivals(allProds.filter(p => p.isNewArrival));
+        setHotDeals(allProds.filter(p => p.isHotDeals));
+      }
+    });
+  }, [dispatch, isMobileDevice]); // ✅ Re-fetch when device type changes
 
   // Filter subcategory products based on active tab
   useEffect(() => {
@@ -80,49 +121,49 @@ useEffect(() => {
   }, [activeTab, bestSellers, newArrivals, discounts, allProducts]);
 
   const filterSubCategoryProducts = () => {
-  // ✅ Start with ALL products matching the active tab
-  let sourceProducts = [];
+    // ✅ Start with ALL products matching the active tab
+    let sourceProducts = [];
 
-  switch (activeTab) {
-    case "bestseller":
-      sourceProducts = allProducts.filter(p => p.isBestSeller);
-      break;
-    case "new":
-      sourceProducts = allProducts.filter(p => p.isNewArrival);
-      break;
-    case "discount":
-      sourceProducts = allProducts.filter(p => p.salePrice && p.salePrice < p.price);
-      break;
-    default:
-      sourceProducts = allProducts;
-  }
+    switch (activeTab) {
+      case "bestseller":
+        sourceProducts = allProducts.filter(p => p.isBestSeller);
+        break;
+      case "new":
+        sourceProducts = allProducts.filter(p => p.isNewArrival);
+        break;
+      case "hotdeals":
+        sourceProducts = allProducts.filter(p => p.isHotDeals);
+        break;
+      default:
+        sourceProducts = allProducts;
+    }
 
-  console.log(`📊 ${activeTab} - Total products:`, sourceProducts.length);
+    console.log(`📊 ${activeTab} - Total products:`, sourceProducts.length);
 
-  // Filter by subcategories
-  const shirts = sourceProducts.filter(p => {
-    const sub = p.subCategory?.toLowerCase() || '';
-    return sub.includes('shirt') && !sub.includes('shacket');
-  });
-  
-  const shakers = sourceProducts.filter(p => {
-    const sub = p.subCategory?.toLowerCase() || '';
-    return sub.includes('shacket');
-  });
-  
-  const sneakers = sourceProducts.filter(p => {
-    const sub = p.subCategory?.toLowerCase() || '';
-    return sub.includes('sneaker');
-  });
+    // Filter by subcategories
+    const shirts = sourceProducts.filter(p => {
+      const sub = p.subCategory?.toLowerCase() || '';
+      return sub.includes('shirt') && !sub.includes('shacket');
+    });
+    
+    const shakers = sourceProducts.filter(p => {
+      const sub = p.subCategory?.toLowerCase() || '';
+      return sub.includes('shacket');
+    });
+    
+    const sneakers = sourceProducts.filter(p => {
+      const sub = p.subCategory?.toLowerCase() || '';
+      return sub.includes('sneaker');
+    });
 
-  console.log(`👕 Shirts found: ${shirts.length}`);
-  console.log(`🧥 Shackets found: ${shakers.length}`);
-  console.log(`👟 Sneakers found: ${sneakers.length}`);
+    console.log(`👕 Shirts found: ${shirts.length}`);
+    console.log(`🧥 Shackets found: ${shakers.length}`);
+    console.log(`👟 Sneakers found: ${sneakers.length}`);
 
-  setShirtsProducts(shirts.slice(0, 5));
-  setShakersProducts(shakers.slice(0, 5));
-  setSneakersProducts(sneakers.slice(0, 5));
-};
+    setShirtsProducts(shirts.slice(0, 5));
+    setShakersProducts(shakers.slice(0, 5));
+    setSneakersProducts(sneakers.slice(0, 5));
+  };
 
   useEffect(() => {
     if (activeBanners.length > 0) {
@@ -137,8 +178,29 @@ useEffect(() => {
     return banner.title || banner.subtitle || banner.description || banner.link;
   };
 
+  // ✅ ADD: Debug info in console
+  useEffect(() => {
+    console.log('🎯 Active banners count:', activeBanners.length);
+    console.log('📱 Is mobile device:', isMobileDevice);
+    console.log('🎨 Banners data:', activeBanners.map(b => ({
+      id: b._id,
+      title: b.title,
+      isMobile: b.isMobile,
+      isActive: b.isActive
+    })));
+  }, [activeBanners, isMobileDevice]);
+
   return (
     <div className="min-h-screen bg-[#EAEDED]">
+      {/* ✅ ADD: Debug banner at top (remove in production) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-blue-500 text-white text-xs p-2 text-center font-mono">
+          Device: {isMobileDevice ? '📱 Mobile' : '🖥️ Desktop'} | 
+          Banners: {activeBanners.length} | 
+          Total: {banners?.length || 0}
+        </div>
+      )}
+
       {/* Hero Banner Section */}
       <section className="relative h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[650px] overflow-hidden">
         <div className="absolute inset-0 opacity-5">
@@ -163,7 +225,7 @@ useEffect(() => {
                     <img
                       src={banner.image}
                       alt={banner.title || 'Banner'}
-                      className="w-full h-full object-fill object-center sm:object-cover"
+                      className="w-full h-full object-center object-cover"
                     />
                     {showContent && (
                       <div 
@@ -252,7 +314,12 @@ useEffect(() => {
               <h1 className="text-3xl md:text-5xl lg:text-7xl font-black text-white">
                 Welcome to Our Store
               </h1>
-              <p className="text-lg md:text-xl text-white/80">Discover Amazing Products</p>
+              <p className="text-lg md:text-xl text-white/80">
+                {isMobileDevice 
+                  ? "Browse on mobile for the best experience" 
+                  : "Discover Amazing Products"
+                }
+              </p>
               <button
                 onClick={() => router.push("/products")}
                 className="px-6 py-3 md:px-8 md:py-4 bg-[#FD0002] text-white rounded-full font-bold text-sm md:text-lg hover:scale-105 transition-transform"
@@ -282,8 +349,8 @@ useEffect(() => {
       color="amber"
     />
     <TabButton
-      active={activeTab === "discount"}
-      onClick={() => setActiveTab("discount")}
+      active={activeTab === "hotdeals"}
+      onClick={() => setActiveTab("hotdeals")}
       icon={<Flame className="w-4 h-4" />}
       label="Hot Deals"
       color="red"
@@ -368,22 +435,21 @@ useEffect(() => {
         </section>
       )}
 
-      {/* Hot Deals - Desktop */}
-      {discounts.length > 0 && (
-        <section className="hidden md:block py-8 lg:py-12 bg-white">
-          <div className="container mx-auto px-4 md:px-8 lg:px-16">
-            <SectionHeader
-              icon={<Flame className="w-6 h-6 md:w-7 md:h-7 text-red-600 animate-pulse" />}
-              badge="Limited Time"
-              title="Hot Deals"
-              gradient="from-red-700 via-[#FD0002] to-red-500"
-              accentColor="red"
-              onViewAll={() => router.push("/products?filter=discount")}
-            />
-            <HorizontalScroll products={discounts} loading={productsLoading} />
-          </div>
-        </section>
-      )}
+      {hotDeals.length > 0 && (
+  <section className="hidden md:block py-8 lg:py-12 bg-white">
+    <div className="container mx-auto px-4 md:px-8 lg:px-16">
+      <SectionHeader
+        icon={<Flame className="w-6 h-6 md:w-7 md:h-7 text-red-600 animate-pulse" />}
+        badge="Limited Time"
+        title="Hot Deals"
+        gradient="from-red-700 via-[#FD0002] to-red-500"
+        accentColor="red"
+        onViewAll={() => router.push("/products?hotDeals=true")}
+      />
+      <HorizontalScroll products={hotDeals} loading={productsLoading} />
+    </div>
+  </section>
+)}
 
       <section className="py-8 lg:py-12 bg-[#EAEDED]">
   <div className="container mx-auto px-4 md:px-8 lg:px-16">
@@ -532,7 +598,7 @@ function SectionHeader({ icon, badge, title, gradient, accentColor, onViewAll })
   const colors = {
     amber: "border-amber-300 hover:border-amber-500 hover:bg-amber-50 text-amber-700",
     blue: "border-blue-300 hover:border-blue-500 hover:bg-blue-50 text-blue-700",
-    red: "border-red-300 hover:border-red-500 hover:bg-red-50 text-[#FD0002]",
+    red: "border-red-300 hover:border-red-500 hover:bg-red-50 text-[#FD0002]", // ✅ Used for Hot Deals
   };
 
   return (
@@ -570,7 +636,7 @@ function TabButton({ active, onClick, icon, label, color }) {
       inactive: "text-blue-400 hover:bg-slate-700 hover:text-white",
       active: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
     },
-    red: {
+    red: { // ✅ Used for Hot Deals
       inactive: "text-rose-400 hover:bg-slate-700 hover:text-white",
       active: "bg-gradient-to-r from-rose-600 to-pink-600 text-white"
     }
