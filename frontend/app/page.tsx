@@ -202,135 +202,261 @@ export default function ModernHomePage() {
       )}
 
       {/* Hero Banner Section */}
-      <section className="relative h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[650px] overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(253,0,2,0.2),transparent_50%)] animate-pulse-slow" />
-        </div>
+     <section className="relative w-full overflow-hidden bg-gray-900">
+  {/* Desktop Banner: 192:50 aspect ratio (1920x500) */}
+  <div className="hidden md:block relative w-full aspect-[192/50] max-h-[500px]">
+    <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(253,0,2,0.2),transparent_50%)] animate-pulse-slow" />
+    </div>
 
-        {activeBanners.length > 0 ? (
-          <>
-            {activeBanners.map((banner, index) => {
-              const showContent = hasContent(banner);
-              
-              return (
-                <div
-                  key={banner._id}
-                  className={`absolute inset-0 transition-all duration-1000 ease-out ${
-                    index === currentSlide
-                      ? "opacity-100 scale-100"
-                      : "opacity-0 scale-105"
-                  }`}
-                >
-                  <div className="absolute inset-0">
-                    <img
-                      src={banner.image}
-                      alt={banner.title || 'Banner'}
-                      className="w-full h-full object-center object-cover"
-                    />
-                    {showContent && (
-                      <div 
-                        className="absolute inset-0"
-                        style={{ 
-                          background: `linear-gradient(to right, ${banner.backgroundColor || '#000000'}dd, ${banner.backgroundColor || '#000000'}88, transparent)` 
-                        }}
-                      />
-                    )}
-                  </div>
-
-                  {showContent && (
-                    <div className="relative h-full flex items-center">
-                      <div className="container mx-auto px-4 md:px-8 lg:px-16">
-                        <div className="max-w-2xl space-y-4 md:space-y-6 animate-slide-up">
-                          {banner.subtitle && (
-                            <div className="flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-[#FD0002] animate-pulse" />
-                              <span 
-                                className="text-xs md:text-sm font-semibold uppercase tracking-wider"
-                                style={{ color: banner.textColor || '#ffffff' }}
-                              >
-                                {banner.subtitle}
-                              </span>
-                            </div>
-                          )}
-                          {banner.title && (
-                            <h1
-                              className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight"
-                              style={{ color: banner.textColor || '#ffffff' }}
-                            >
-                              {banner.title}
-                            </h1>
-                          )}
-                          {banner.description && (
-                            <p 
-                              className="text-sm md:text-lg lg:text-xl max-w-xl"
-                              style={{ color: banner.textColor || '#ffffff', opacity: 0.9 }}
-                            >
-                              {banner.description}
-                            </p>
-                          )}
-                          {banner.link && (
-                            <button
-                              onClick={() => router.push(banner.link)}
-                              className="group/btn relative px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-sm md:text-base overflow-hidden transition-all duration-300 hover:scale-105"
-                              style={{
-                                backgroundColor: banner.buttonColor || "#FD0002",
-                                color: banner.buttonColor === "#000000" ? "#fff" : "#000",
-                              }}
-                            >
-                              <span className="relative z-10 flex items-center gap-2">
-                                {banner.linkText || "Shop Now"}
-                                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:translate-x-1 transition-transform" />
-                              </span>
-                              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {activeBanners.length > 1 && (
-              <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
-                {activeBanners.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`transition-all duration-500 rounded-full ${
-                      currentSlide === index
-                        ? "w-8 md:w-12 h-2 md:h-3 bg-[#FD0002]"
-                        : "w-2 md:w-3 h-2 md:h-3 bg-white/50 hover:bg-white/80"
-                    }`}
+    {activeBanners.length > 0 ? (
+      <>
+        {activeBanners.map((banner, index) => {
+          const showContent = hasContent(banner);
+          
+          return (
+            <div
+              key={banner._id}
+              className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                index === currentSlide
+                  ? "opacity-100 scale-100"
+                  : "opacity-0 scale-105"
+              }`}
+            >
+              <div className="absolute inset-0">
+                <img
+                  src={banner.image}
+                  alt={banner.title || 'Banner'}
+                  className="w-full h-full object-cover object-center"
+                />
+                {showContent && (
+                  <div 
+                    className="absolute inset-0"
+                    style={{ 
+                      background: `linear-gradient(to right, ${banner.backgroundColor || '#000000'}dd, ${banner.backgroundColor || '#000000'}88, transparent)` 
+                    }}
                   />
-                ))}
+                )}
               </div>
-            )}
-          </>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-r from-gray-800 to-gray-900">
-            <div className="text-center space-y-4 px-4">
-              <h1 className="text-3xl md:text-5xl lg:text-7xl font-black text-white">
-                Welcome to Our Store
-              </h1>
-              <p className="text-lg md:text-xl text-white/80">
-                {isMobileDevice 
-                  ? "Browse on mobile for the best experience" 
-                  : "Discover Amazing Products"
-                }
-              </p>
-              <button
-                onClick={() => router.push("/products")}
-                className="px-6 py-3 md:px-8 md:py-4 bg-[#FD0002] text-white rounded-full font-bold text-sm md:text-lg hover:scale-105 transition-transform"
-              >
-                Shop Now
-              </button>
+
+              {showContent && (
+                <div className="relative h-full flex items-center">
+                  <div className="container mx-auto px-4 lg:px-16">
+                    <div className="max-w-2xl space-y-4 animate-slide-up">
+                      {banner.subtitle && (
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 text-[#FD0002] animate-pulse" />
+                          <span 
+                            className="text-xs lg:text-sm font-semibold uppercase tracking-wider"
+                            style={{ color: banner.textColor || '#ffffff' }}
+                          >
+                            {banner.subtitle}
+                          </span>
+                        </div>
+                      )}
+                      {banner.title && (
+                        <h1
+                          className="text-3xl lg:text-5xl xl:text-6xl font-black leading-tight"
+                          style={{ color: banner.textColor || '#ffffff' }}
+                        >
+                          {banner.title}
+                        </h1>
+                      )}
+                      {banner.description && (
+                        <p 
+                          className="text-sm lg:text-lg max-w-xl"
+                          style={{ color: banner.textColor || '#ffffff', opacity: 0.9 }}
+                        >
+                          {banner.description}
+                        </p>
+                      )}
+                      {banner.link && (
+                        <button
+                          onClick={() => router.push(banner.link)}
+                          className="group/btn relative px-6 py-3 lg:px-8 lg:py-4 rounded-full font-bold text-sm lg:text-base overflow-hidden transition-all duration-300 hover:scale-105"
+                          style={{
+                            backgroundColor: banner.buttonColor || "#FD0002",
+                            color: banner.buttonColor === "#000000" ? "#fff" : "#000",
+                          }}
+                        >
+                          <span className="relative z-10 flex items-center gap-2">
+                            {banner.linkText || "Shop Now"}
+                            <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 group-hover/btn:translate-x-1 transition-transform" />
+                          </span>
+                          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+          );
+        })}
+
+        {activeBanners.length > 1 && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            {activeBanners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`transition-all duration-500 rounded-full ${
+                  currentSlide === index
+                    ? "w-10 lg:w-12 h-2 lg:h-3 bg-[#FD0002]"
+                    : "w-2 lg:w-3 h-2 lg:h-3 bg-white/50 hover:bg-white/80"
+                }`}
+              />
+            ))}
           </div>
         )}
-      </section>
+      </>
+    ) : (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center space-y-4 px-4">
+          <h1 className="text-4xl lg:text-6xl font-black text-white">
+            Welcome to Our Store
+          </h1>
+          <p className="text-lg lg:text-xl text-white/80">
+            Discover Amazing Products
+          </p>
+          <button
+            onClick={() => router.push("/products")}
+            className="px-6 py-3 lg:px-8 lg:py-4 bg-[#FD0002] text-white rounded-full font-bold text-sm lg:text-base hover:scale-105 transition-transform"
+          >
+            Shop Now
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
 
+  {/* Mobile Banner: 5:4 aspect ratio (750x600) */}
+  <div className="block md:hidden relative w-full aspect-[5/4] max-h-[350px]">
+    <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(253,0,2,0.2),transparent_50%)] animate-pulse-slow" />
+    </div>
+
+    {activeBanners.length > 0 ? (
+      <>
+        {activeBanners.map((banner, index) => {
+          const showContent = hasContent(banner);
+          
+          return (
+            <div
+              key={banner._id}
+              className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                index === currentSlide
+                  ? "opacity-100 scale-100"
+                  : "opacity-0 scale-105"
+              }`}
+            >
+              <div className="absolute inset-0">
+                <img
+                  src={banner.image}
+                  alt={banner.title || 'Banner'}
+                  className="w-full h-full object-cover object-center"
+                />
+                {showContent && (
+                  <div 
+                    className="absolute inset-0"
+                    style={{ 
+                      background: `linear-gradient(to bottom, transparent 30%, ${banner.backgroundColor || '#000000'}dd)` 
+                    }}
+                  />
+                )}
+              </div>
+
+              {showContent && (
+                <div className="relative h-full flex items-end pb-8">
+                  <div className="container mx-auto px-4">
+                    <div className="space-y-2 animate-slide-up">
+                      {banner.subtitle && (
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-3 h-3 text-[#FD0002] animate-pulse" />
+                          <span 
+                            className="text-xs font-semibold uppercase tracking-wider"
+                            style={{ color: banner.textColor || '#ffffff' }}
+                          >
+                            {banner.subtitle}
+                          </span>
+                        </div>
+                      )}
+                      {banner.title && (
+                        <h1
+                          className="text-2xl font-black leading-tight"
+                          style={{ color: banner.textColor || '#ffffff' }}
+                        >
+                          {banner.title}
+                        </h1>
+                      )}
+                      {banner.description && (
+                        <p 
+                          className="text-xs max-w-xs line-clamp-2"
+                          style={{ color: banner.textColor || '#ffffff', opacity: 0.9 }}
+                        >
+                          {banner.description}
+                        </p>
+                      )}
+                      {banner.link && (
+                        <button
+                          onClick={() => router.push(banner.link)}
+                          className="group/btn relative px-5 py-2 rounded-full font-bold text-xs overflow-hidden transition-all duration-300 hover:scale-105 mt-2"
+                          style={{
+                            backgroundColor: banner.buttonColor || "#FD0002",
+                            color: banner.buttonColor === "#000000" ? "#fff" : "#000",
+                          }}
+                        >
+                          <span className="relative z-10 flex items-center gap-1">
+                            {banner.linkText || "Shop Now"}
+                            <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
+                          </span>
+                          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {activeBanners.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            {activeBanners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`transition-all duration-500 rounded-full ${
+                  currentSlide === index
+                    ? "w-8 h-2 bg-[#FD0002]"
+                    : "w-2 h-2 bg-white/50 hover:bg-white/80"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    ) : (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center space-y-3 px-4">
+          <h1 className="text-2xl font-black text-white">
+            Welcome to Our Store
+          </h1>
+          <p className="text-sm text-white/80">
+            Browse on mobile for the best experience
+          </p>
+          <button
+            onClick={() => router.push("/products")}
+            className="px-5 py-2 bg-[#FD0002] text-white rounded-full font-bold text-xs hover:scale-105 transition-transform"
+          >
+            Shop Now
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+</section>
       {/* Mobile Tabs Section */}
       <section className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg">
   <div className="flex overflow-x-auto hide-scrollbar">
@@ -403,7 +529,7 @@ export default function ModernHomePage() {
       {/* Desktop Sections - NOW WITH HORIZONTAL SCROLL */}
       {/* Best Sellers - Desktop */}
       {bestSellers.length > 0 && (
-        <section className="hidden md:block py-8 lg:py-12 bg-white">
+        <section className="hidden md:block py-4 lg:py-6 bg-white">
           <div className="container mx-auto px-4 md:px-8 lg:px-16">
             <SectionHeader
               icon={<Trophy className="w-6 h-6 md:w-7 md:h-7 text-amber-600" />}
@@ -420,7 +546,7 @@ export default function ModernHomePage() {
 
       {/* New Arrivals - Desktop */}
       {newArrivals.length > 0 && (
-        <section className="hidden md:block py-8 lg:py-12 bg-[#EAEDED]">
+        <section className="hidden md:block py-4 lg:py-6 bg-[#EAEDED]">
           <div className="container mx-auto px-4 md:px-8 lg:px-16">
             <SectionHeader
               icon={<Clock className="w-6 h-6 md:w-7 md:h-7 text-blue-700 animate-pulse" />}
