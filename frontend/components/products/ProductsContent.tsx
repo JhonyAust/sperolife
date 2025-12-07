@@ -208,7 +208,12 @@ export default function ProductContent() {
         const discountB = b.salePrice ? ((b.price - b.salePrice) / b.price) * 100 : 0;
         return discountB - discountA;
       });
+    }else {
+    // ✅ ADD THIS: Shuffle products if sortBy is "newest" (default)
+    if (sortBy === "newest") {
+      filtered = filtered.sort(() => Math.random() - 0.5);
     }
+  }
 
     return filtered;
   };

@@ -1014,10 +1014,17 @@ const shippingCharge = hasSneakers
                                   <Plus className="w-3 h-3 text-gray-700" />
                                 </motion.button>
                               </div>
-                              <p className="text-sm sm:text-base font-bold text-indigo-600">
-                                ৳{(item.salePrice || item.price) * item.quantity}
-                              </p>
-                            </div>
+                               <div className="flex items-baseline gap-2">
+                          <p className="text-base font-bold text-red-600">
+                            ৳{((item.salePrice || item.price) * item.quantity).toFixed(2)}
+                          </p>
+                          {item.salePrice && item.salePrice < item.price && (
+                            <span className="text-xs text-gray-400 line-through">
+                              ৳{(item.price * item.quantity).toFixed(2)}
+                            </span>
+                          )}
+                  </div>
+                                              </div>
                           </div>
                         </motion.div>
                       ))}
