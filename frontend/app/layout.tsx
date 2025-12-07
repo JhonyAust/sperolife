@@ -6,6 +6,8 @@ import { Providers } from "./providers";
 import FrontendHeader from "@/components/layout/FrontendHeader";
 import FrontendFooter from "@/components/layout/FrontendFooter"; 
 import { OptimizedDataLoader } from "@/components/Provider/OptimizedDataLoader";
+import MetaPixel from "@/components/MetaPixel/MetaPixel";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -31,6 +33,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+         <MetaPixel />
         <Providers>
           <OptimizedDataLoader> {/* 🔥 ADD THIS */}
             <FrontendHeader />

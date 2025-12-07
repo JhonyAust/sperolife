@@ -514,6 +514,14 @@ export default function Header() {
                   )}
                 </Link>
               ))}
+              <Link
+                    href="/wishlist"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all"
+                  >
+                    <Heart className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium text-gray-700">Wishlist</span>
+                  </Link>
             </div>
 
             {/* Quick Links */}
@@ -528,14 +536,7 @@ export default function Header() {
                     <Package className="w-5 h-5 text-gray-600" />
                     <span className="font-medium text-gray-700">My Orders</span>
                   </Link>
-                  <Link
-                    href="/wishlist"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all"
-                  >
-                    <Heart className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-700">Wishlist</span>
-                  </Link>
+                  
                   <Link
                     href="/account"
                     onClick={() => setMobileMenuOpen(false)}
