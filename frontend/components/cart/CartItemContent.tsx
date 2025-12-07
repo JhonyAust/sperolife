@@ -158,9 +158,16 @@ export default function CartItemContent({ cartItem }: CartItemContentProps) {
         </div>
 
         {/* Price */}
+        <div className="flex items-baseline gap-2">
         <p className="text-base font-bold text-red-600">
-          ৳{(cartItem.price * cartItem.quantity).toFixed(2)}
+          ৳{((cartItem.salePrice || cartItem.price) * cartItem.quantity).toFixed(2)}
         </p>
+        {cartItem.salePrice && cartItem.salePrice < cartItem.price && (
+          <span className="text-xs text-gray-400 line-through">
+            ৳{(cartItem.price * cartItem.quantity).toFixed(2)}
+          </span>
+        )}
+</div>
       </div>
     </div>
   );

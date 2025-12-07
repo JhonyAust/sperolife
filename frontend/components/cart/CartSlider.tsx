@@ -23,10 +23,13 @@ export default function CartSlider({ isOpen, onClose }: CartSliderProps) {
   const router = useRouter();
   const { items: cartItems } = useAppSelector((state) => state.cart);
 
-  const totalCartAmount = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+ const totalCartAmount = cartItems.reduce(
+  (sum, item) => {
+    const effectivePrice = item.salePrice || item.price;
+    return sum + effectivePrice * item.quantity;
+  },
+  0
+);
 
   const handleCheckout = () => {
     onClose();
