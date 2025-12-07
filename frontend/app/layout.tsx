@@ -7,6 +7,7 @@ import FrontendHeader from "@/components/layout/FrontendHeader";
 import FrontendFooter from "@/components/layout/FrontendFooter"; 
 import { OptimizedDataLoader } from "@/components/Provider/OptimizedDataLoader";
 import MetaPixel from "@/components/MetaPixel/MetaPixel";
+import FrontendWhatsAppFloat from "@/components/layout/FrontendWhatsAppFloat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
             <main>{children}</main>
             <Toaster position="top-center" richColors />
             <FrontendFooter/>
+            <FrontendWhatsAppFloat />
           </OptimizedDataLoader> {/* 🔥 ADD THIS */}
         </Providers>
       </body>
