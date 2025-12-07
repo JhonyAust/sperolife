@@ -106,9 +106,9 @@ export default function ModernHomePage() {
         // ✅ Randomize all products on page load
         setRandomizedProducts(shuffleArray(allProds));
         
-        setBestSellers(allProds.filter(p => p.isBestSeller));
-        setNewArrivals(allProds.filter(p => p.isNewArrival));
-        setHotDeals(allProds.filter(p => p.isHotDeals));
+        setBestSellers(shuffleArray(allProds.filter(p => p.isBestSeller)));
+        setHotDeals(shuffleArray(allProds.filter(p => p.isHotDeals)));
+        setNewArrivals(shuffleArray(allProds.filter(p => p.isNewArrival)));
       }
     });
   }, [dispatch, isMobileDevice]); // ✅ Re-fetch when device type changes
