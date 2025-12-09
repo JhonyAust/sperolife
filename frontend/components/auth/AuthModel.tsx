@@ -299,7 +299,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-50 to-pink-50 rounded-full mb-4">
                     <Mail className="w-8 h-8 text-brand-500" />
                   </div>
-                  <h2 className="text-3xl font-bold mb-2">Forgot Password?</h2>
+                  <h2 className="text-3xl font-bold mb-2 text-gradient-primary">Forgot Password?</h2>
                   <p className="text-sm text-gray-600">
                     Enter your email and we'll send you a reset link
                   </p>

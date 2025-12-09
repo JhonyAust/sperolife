@@ -6,6 +6,17 @@ const Notification = require('../models/Notification');
 const PDFDocument = require('pdfkit');
 const { broadcastNotification, broadcastUnreadCount } = require('../routes/notificationSSE');
 
+// ✅ Helper function to find order by ID or orderNumber
+const findOrderByIdOrNumber = async (identifier) => {
+  const isMongoId = /^[0-9a-fA-F]{24}$/.test(identifier);
+  
+  if (isMongoId) {
+    return await Order.findById(identifier);
+  } else {
+    return await Order.findOne({ orderNumber: identifier });
+  }
+};
+
 // @desc    Get all orders with advanced filters (Admin)
 // @route   GET /api/admin/orders
 // @access  Private/Admin
@@ -100,14 +111,10 @@ exports.getOrderById = async (req, res) => {
 
     let order;
     
-    // Check if it's an order number (starts with ORD-) or MongoDB ID
-    if (id.startsWith('ORD-')) {
-      console.log('📦 Backend - Searching by order number:', id);
-      order = await Order.findOne({ orderNumber: id })
-        .populate('userId', 'name email phone')
-        .populate('cartItems.product', 'name category brand')
-        .populate('statusHistory.updatedBy', 'name');
-    } else if (id.match(/^[0-9a-fA-F]{24}$/)) {
+    // Check if it's a MongoDB ObjectId (24 hex characters)
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+    
+    if (isMongoId) {
       // Valid MongoDB ObjectId format
       console.log('📦 Backend - Searching by MongoDB ID:', id);
       order = await Order.findById(id)
@@ -115,11 +122,12 @@ exports.getOrderById = async (req, res) => {
         .populate('cartItems.product', 'name category brand')
         .populate('statusHistory.updatedBy', 'name');
     } else {
-      console.log('❌ Backend - Invalid ID format:', id);
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid order ID format'
-      });
+      // Treat as order number (supports any format: ORD-2025-000001, SL2EHL-NZHJ-8K, etc.)
+      console.log('📦 Backend - Searching by order number:', id);
+      order = await Order.findOne({ orderNumber: id })
+        .populate('userId', 'name email phone')
+        .populate('cartItems.product', 'name category brand')
+        .populate('statusHistory.updatedBy', 'name');
     }
 
     if (!order) {
@@ -153,7 +161,10 @@ exports.updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { status, note, trackingNumber, courierService } = req.body;
 
-    const order = await Order.findById(id);
+    console.log('🔄 Updating order status:', id, '→', status);
+
+    const order = await findOrderByIdOrNumber(id);
+    
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -206,6 +217,8 @@ exports.updateOrderStatus = async (req, res) => {
       console.warn('⚠️ Notification creation failed:', notifError.message);
     }
 
+    console.log('✅ Order status updated:', order.orderNumber);
+
     res.json({
       success: true,
       message: `Order status updated to ${status}`,
@@ -221,6 +234,86 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
+// @desc    Update payment status (Admin)
+// @route   PUT /api/admin/orders/:id/payment-status
+// @access  Private/Admin
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentStatus, note } = req.body;
+
+    console.log('💳 Updating payment status:', id, '→', paymentStatus);
+
+    const order = await findOrderByIdOrNumber(id);
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Validate payment status
+    const validStatuses = ['pending', 'paid', 'failed'];
+    if (!validStatuses.includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment status'
+      });
+    }
+
+    // Update payment status
+    order.paymentStatus = paymentStatus;
+
+    // Add to status history
+    order.statusHistory.push({
+      status: order.orderStatus,
+      timestamp: new Date(),
+      note: `Payment status updated to ${paymentStatus}${note ? ': ' + note : ''}`,
+      updatedBy: req.user?._id
+    });
+
+    await order.save();
+
+    // Create notification
+    try {
+      const notification = await Notification.create({
+        type: 'order',
+        title: 'Payment Status Updated',
+        message: `Payment status for order ${order.orderNumber} changed to ${paymentStatus}`,
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        userId: order.userId,
+        priority: 'medium'
+      });
+
+      if (typeof broadcastNotification === 'function') {
+        broadcastNotification(notification);
+      }
+      if (typeof broadcastUnreadCount === 'function') {
+        broadcastUnreadCount();
+      }
+    } catch (notifError) {
+      console.warn('⚠️ Notification creation failed:', notifError.message);
+    }
+
+    console.log('✅ Payment status updated:', order.orderNumber);
+
+    res.json({
+      success: true,
+      message: `Payment status updated to ${paymentStatus}`,
+      order
+    });
+  } catch (error) {
+    console.error('❌ Update payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update payment status',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Cancel order (Admin)
 // @route   PUT /api/admin/orders/:id/cancel
 // @access  Private/Admin
@@ -229,7 +322,10 @@ exports.cancelOrder = async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
-    const order = await Order.findById(id);
+    console.log('🚫 Cancelling order:', id);
+
+    const order = await findOrderByIdOrNumber(id);
+    
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -267,6 +363,7 @@ exports.cancelOrder = async (req, res) => {
         }
         
         await product.save();
+        console.log(`✅ Restored ${item.quantity} stock for ${item.title}`);
       }
     }
 
@@ -297,6 +394,8 @@ exports.cancelOrder = async (req, res) => {
       console.warn('⚠️ Notification creation failed:', notifError.message);
     }
 
+    console.log('✅ Order cancelled:', order.orderNumber);
+
     res.json({
       success: true,
       message: 'Order cancelled successfully',
@@ -320,7 +419,16 @@ exports.deleteOrder = async (req, res) => {
     const { id } = req.params;
     const { permanent = false } = req.query;
 
-    const order = await Order.findById(id);
+    console.log('🗑️ Deleting order:', id);
+
+    let order;
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+
+    if (isMongoId) {
+      order = await Order.findById(id);
+    } else {
+      order = await Order.findOne({ orderNumber: id });
+    }
 
     if (!order) {
       return res.status(404).json({
@@ -337,7 +445,14 @@ exports.deleteOrder = async (req, res) => {
       });
     }
 
-    await Order.findByIdAndDelete(id);
+    // Delete the order
+    if (isMongoId) {
+      await Order.findByIdAndDelete(id);
+    } else {
+      await Order.findOneAndDelete({ orderNumber: id });
+    }
+
+    console.log('✅ Order deleted:', order.orderNumber);
 
     res.json({
       success: true,
@@ -361,11 +476,9 @@ exports.updateOrderNotes = async (req, res) => {
     const { id } = req.params;
     const { adminNotes } = req.body;
 
-    const order = await Order.findByIdAndUpdate(
-      id,
-      { adminNotes },
-      { new: true }
-    );
+    console.log('📝 Updating admin notes:', id);
+
+    const order = await findOrderByIdOrNumber(id);
 
     if (!order) {
       return res.status(404).json({
@@ -373,6 +486,11 @@ exports.updateOrderNotes = async (req, res) => {
         message: 'Order not found'
       });
     }
+
+    order.adminNotes = adminNotes;
+    await order.save();
+
+    console.log('✅ Admin notes updated:', order.orderNumber);
 
     res.json({
       success: true,
@@ -459,9 +577,20 @@ exports.generateInvoice = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const order = await Order.findById(id)
-      .populate('userId', 'name email phone')
-      .populate('cartItems.product', 'name');
+    console.log('📄 Generating invoice for:', id);
+
+    let order;
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+
+    if (isMongoId) {
+      order = await Order.findById(id)
+        .populate('userId', 'name email phone')
+        .populate('cartItems.product', 'name');
+    } else {
+      order = await Order.findOne({ orderNumber: id })
+        .populate('userId', 'name email phone')
+        .populate('cartItems.product', 'name');
+    }
 
     if (!order) {
       return res.status(404).json({
@@ -478,6 +607,8 @@ exports.generateInvoice = async (req, res) => {
       });
     }
 
+    console.log('✅ Generating invoice for:', order.orderNumber);
+
     // Create PDF document with proper font support
     const doc = new PDFDocument({ margin: 50 });
 
@@ -492,14 +623,14 @@ exports.generateInvoice = async (req, res) => {
     doc.fontSize(20).font('Helvetica-Bold').text('INVOICE', { align: 'center' });
     doc.moveDown();
 
-    // Company Info - REDUCED GAPS
+    // Company Info
     doc.fontSize(10).font('Helvetica-Bold').text('SperoLife', 50, 120);
     doc.fontSize(9).font('Helvetica').text('Eastern Banabithi Shopping Complex (10 Tola Market)', 50, 133);
     doc.text('South Banasree Dhaka 1219', 50, 144);
     doc.text('Phone: +880 1750-873525', 50, 155);
     doc.text('Email: sperolifebd@gmail.com', 50, 166);
 
-    // Invoice Details - ADJUSTED POSITIONING
+    // Invoice Details
     doc.fontSize(9).font('Helvetica-Bold').text('Invoice Number:', 350, 120);
     doc.font('Helvetica').text(order.orderNumber, 440, 120);
     
@@ -509,17 +640,17 @@ exports.generateInvoice = async (req, res) => {
     doc.font('Helvetica-Bold').text('Status:', 350, 146);
     doc.font('Helvetica').text(order.orderStatus.toUpperCase(), 440, 146);
 
-    // Line separator - ADJUSTED
+    // Line separator
     doc.moveTo(50, 185).lineTo(550, 185).stroke();
 
-    // Customer Info - ADJUSTED
+    // Customer Info
     doc.fontSize(10).font('Helvetica-Bold').text('Bill To:', 50, 200);
     doc.fontSize(9).font('Helvetica').text(order.addressInfo.name, 50, 213);
     doc.text(order.addressInfo.address, 50, 224);
     doc.text(`${order.addressInfo.city}, ${order.addressInfo.pincode}`, 50, 235);
     doc.text(`Phone: ${order.addressInfo.phone}`, 50, 246);
 
-    // Items Table Header - ADJUSTED
+    // Items Table Header
     const tableTop = 280;
     doc.fontSize(9).font('Helvetica-Bold');
     doc.text('Item', 50, tableTop);
@@ -604,6 +735,7 @@ exports.generateInvoice = async (req, res) => {
     });
   }
 };
+
 // @desc    Bulk update orders
 // @route   PUT /api/admin/orders/bulk-update
 // @access  Private/Admin
@@ -621,7 +753,7 @@ exports.bulkUpdateOrders = async (req, res) => {
     const updatedOrders = [];
     
     for (const orderId of orderIds) {
-      const order = await Order.findById(orderId);
+      const order = await findOrderByIdOrNumber(orderId);
       if (order) {
         await order.updateStatus(status, note, req.user?._id);
         updatedOrders.push(order);
@@ -638,80 +770,6 @@ exports.bulkUpdateOrders = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update orders',
-      error: error.message
-    });
-  }
-};
-// @desc    Update payment status (Admin)
-// @route   PUT /api/admin/orders/:id/payment-status
-// @access  Private/Admin
-exports.updatePaymentStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { paymentStatus, note } = req.body;
-
-    const order = await Order.findById(id);
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    // Validate payment status
-    const validStatuses = ['pending', 'paid', 'failed'];
-    if (!validStatuses.includes(paymentStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid payment status'
-      });
-    }
-
-    // Update payment status
-    order.paymentStatus = paymentStatus;
-
-    // Add to status history
-    order.statusHistory.push({
-      status: order.orderStatus,
-      timestamp: new Date(),
-      note: `Payment status updated to ${paymentStatus}${note ? ': ' + note : ''}`,
-      updatedBy: req.user?._id
-    });
-
-    await order.save();
-
-    // Create notification
-    try {
-      const notification = await Notification.create({
-        type: 'order',
-        title: 'Payment Status Updated',
-        message: `Payment status for order ${order.orderNumber} changed to ${paymentStatus}`,
-        orderId: order._id,
-        orderNumber: order.orderNumber,
-        userId: order.userId,
-        priority: 'medium'
-      });
-
-      if (typeof broadcastNotification === 'function') {
-        broadcastNotification(notification);
-      }
-      if (typeof broadcastUnreadCount === 'function') {
-        broadcastUnreadCount();
-      }
-    } catch (notifError) {
-      console.warn('⚠️ Notification creation failed:', notifError.message);
-    }
-
-    res.json({
-      success: true,
-      message: `Payment status updated to ${paymentStatus}`,
-      order
-    });
-  } catch (error) {
-    console.error('❌ Update payment status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update payment status',
       error: error.message
     });
   }
