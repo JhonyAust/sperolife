@@ -79,8 +79,9 @@ export default function ModernCheckout() {
   });
 // Check if cart has any sneakers
 const hasSneakers = cartItems.some(item => 
-  item.subCategory?.toLowerCase() === "sneakers"
+  item.product.subCategory?.toLowerCase() === "sneakers" || item.subCategory?.toLowerCase() === "sneakers"
 );
+console.log("Cart Items: ",cartItems);
 
 const shippingCharge = hasSneakers 
   ? (shippingType === "inside" ? 100 : 150)
