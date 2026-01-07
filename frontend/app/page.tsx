@@ -361,6 +361,16 @@ export default function ModernHomePage() {
       {/* Mobile Tab Content - WITH SUBCATEGORIES */}
       <section className="md:hidden py-4 bg-white">
         <div className="container mx-auto px-4 space-y-6">
+
+          {sneakersProducts.length > 0 && (
+            <SubCategoryRow
+              title="Sneakers"
+              icon="👟"
+              products={sneakersProducts}
+              loading={productsLoading}
+              onSeeAll={() => router.push(`/products?subCategory=sneakers`)}
+            />
+          )}
           {shirtsProducts.length > 0 && (
             <SubCategoryRow
               title="Shirts"
@@ -381,15 +391,6 @@ export default function ModernHomePage() {
             />
           )}
 
-          {sneakersProducts.length > 0 && (
-            <SubCategoryRow
-              title="Sneakers"
-              icon="👟"
-              products={sneakersProducts}
-              loading={productsLoading}
-              onSeeAll={() => router.push(`/products?subCategory=sneakers`)}
-            />
-          )}
 
           {shirtsProducts.length === 0 && shakersProducts.length === 0 && sneakersProducts.length === 0 && (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
