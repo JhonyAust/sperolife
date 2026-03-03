@@ -63,6 +63,8 @@ export default function ModernHomePage() {
     }
     return shuffled;
   };
+ const sortByNewest = (arr) => [...arr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
 
   const [randomizedProducts, setRandomizedProducts] = useState([]);
 
@@ -104,11 +106,16 @@ export default function ModernHomePage() {
         setAllProducts(allProds);
         
         // ✅ Randomize all products on page load
-        setRandomizedProducts(shuffleArray(allProds));
+
+        setRandomizedProducts(sortByNewest(allProds));
+        setBestSellers(sortByNewest(allProds.filter(p => p.isBestSeller)));
+        setHotDeals(sortByNewest(allProds.filter(p => p.isHotDeals)));
+        setNewArrivals(sortByNewest(allProds.filter(p => p.isNewArrival)));
+        // setRandomizedProducts(shuffleArray(allProds));
         
-        setBestSellers(shuffleArray(allProds.filter(p => p.isBestSeller)));
-        setHotDeals(shuffleArray(allProds.filter(p => p.isHotDeals)));
-        setNewArrivals(shuffleArray(allProds.filter(p => p.isNewArrival)));
+        // setBestSellers(shuffleArray(allProds.filter(p => p.isBestSeller)));
+        // setHotDeals(shuffleArray(allProds.filter(p => p.isHotDeals)));
+        // setNewArrivals(shuffleArray(allProds.filter(p => p.isNewArrival)));
       }
     });
   }, [dispatch, isMobileDevice]); // ✅ Re-fetch when device type changes
