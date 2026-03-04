@@ -211,7 +211,8 @@ export default function ProductContent() {
     }else {
     // ✅ ADD THIS: Shuffle products if sortBy is "newest" (default)
     if (sortBy === "newest") {
-      filtered = filtered.sort(() => Math.random() - 0.5);
+      // filtered = filtered.sort(() => Math.random() - 0.5);
+      filtered = filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
   }
 
