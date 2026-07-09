@@ -3,6 +3,7 @@ import Script from 'next/script'
 export default function MetaPixel() {
   return (
     <>
+    {/* New Meta Pixel */}
       <Script
         id="meta-pixel"
         strategy="afterInteractive"
