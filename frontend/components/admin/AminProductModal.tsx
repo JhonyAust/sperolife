@@ -4,6 +4,7 @@ import {
   Box, BarChart3, Sparkles, AlertCircle, TrendingUp, Star, Hash, RefreshCw, Youtube
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import ProductDescription, { DescriptionFormatHint } from "../products/ProductDescription";
 
 interface SizeVariant {
   size: string;
@@ -113,6 +114,7 @@ export default function AdminProductModal({
   const [newFeature, setNewFeature] = useState('');
   const [activeTab, setActiveTab] = useState<'basic' | 'sizes' | 'media' | 'seo'>('basic');
   const [availableSubcategories, setAvailableSubcategories] = useState<string[]>([]);
+  const [showDescriptionPreview, setShowDescriptionPreview] = useState(true);
   const generateSKU = (productName: string, category: string, size?: string) => {
     const prefix = 'SPL';
     const categoryCode = category.substring(0, 3).toUpperCase() || 'GEN';
@@ -551,14 +553,33 @@ useEffect(() => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Full Description *</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-bold text-gray-700">Full Description *</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowDescriptionPreview((v) => !v)}
+                    className="text-xs font-semibold text-purple-600 hover:text-purple-800"
+                  >
+                    {showDescriptionPreview ? 'Hide preview' : 'Show preview'}
+                  </button>
+                </div>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={5}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors resize-none text-gray-900"
-                  placeholder="Detailed product description..."
+                  rows={10}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors resize-y text-gray-900 font-mono text-sm leading-relaxed"
+                  placeholder={"Premium everyday sneaker built for comfort.\n\nKey Features:\n- Breathable mesh upper\n- Cushioned sole\n\nMaterial: Leather & mesh\nSole: Rubber"}
                 />
+                <DescriptionFormatHint />
+                {showDescriptionPreview && formData.description.trim() && (
+                  <div className="mt-3">
+                    <ProductDescription
+                      description={formData.description}
+                      features={formData.features}
+                      collapsible={false}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-2xl p-6 border-2 border-purple-200">
