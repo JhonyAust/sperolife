@@ -13,6 +13,18 @@ const OrderSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
+    // 'reseller' orders are placed through /api/reseller by a user with role 'reseller'
+    orderSource: {
+        type: String,
+        enum: ['website', 'reseller'],
+        default: 'website',
+        index: true
+    },
+    resellerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
     cartItems: [{
         product: {
             type: mongoose.Schema.Types.ObjectId,
@@ -204,6 +216,7 @@ OrderSchema.methods.updateStatus = async function(status, note, updatedBy) {
 // Index for faster queries
 OrderSchema.index({ orderNumber: 1 });
 OrderSchema.index({ userId: 1, createdAt: -1 });
+OrderSchema.index({ resellerId: 1, createdAt: -1 });
 OrderSchema.index({ orderStatus: 1 });
 OrderSchema.index({ createdAt: -1 });
 

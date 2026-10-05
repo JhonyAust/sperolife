@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   X, Package, Loader2, Plus, Trash2, Tag, Ruler, DollarSign, 
-  Box, BarChart3, Sparkles, AlertCircle, TrendingUp, Star, Hash, RefreshCw, Youtube
+  Box, BarChart3, Sparkles, AlertCircle, TrendingUp, Star, Hash, RefreshCw, Youtube, Store
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import ProductDescription, { DescriptionFormatHint } from "../products/ProductDescription";
@@ -38,6 +38,8 @@ interface ProductFormData {
   metaTitle: string;
   metaDescription: string;
   sku: string;
+  isResellerAvailable: boolean;
+  resellerPrice: string;
 }
 
 interface ProductModalProps {
@@ -108,6 +110,8 @@ export default function AdminProductModal({
     metaTitle: '',
     metaDescription: '',
     sku: '',
+    isResellerAvailable: false,
+    resellerPrice: '',
   });
 
   const [newTag, setNewTag] = useState('');
@@ -166,6 +170,8 @@ export default function AdminProductModal({
         metaTitle: product.metaTitle || '',
         metaDescription: product.metaDescription || '',
         sku: product.sku || '',
+        isResellerAvailable: product.isResellerAvailable || false,
+        resellerPrice: product.resellerPrice?.toString() || '',
       });
     } else {
       setFormData({
@@ -192,6 +198,8 @@ export default function AdminProductModal({
         metaTitle: '',
         metaDescription: '',
         sku: '',
+        isResellerAvailable: false,
+        resellerPrice: '',
       });
     }
   }, [product, isOpen]);
@@ -304,6 +312,11 @@ useEffect(() => {
       }
     }
 
+    if (formData.isResellerAvailable && !(parseFloat(formData.resellerPrice) > 0)) {
+      alert('Please set a reseller price before making this product available to resellers');
+      return;
+    }
+
     if (!formData.hasSizeVariants && !formData.sku) {
       alert('Please provide a SKU or click Regenerate to create one');
       return;
@@ -333,6 +346,8 @@ useEffect(() => {
       metaTitle: formData.metaTitle || undefined,
       metaDescription: formData.metaDescription || undefined,
       sku: !formData.hasSizeVariants ? formData.sku : undefined,
+      isResellerAvailable: formData.isResellerAvailable,
+      resellerPrice: formData.resellerPrice ? parseFloat(formData.resellerPrice) : null,
     };
 
     console.log('Submitting product data:', submitData);
@@ -633,6 +648,46 @@ useEffect(() => {
                   </span>
                 </label>
                 </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-emerald-200">
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Store className="w-5 h-5 text-emerald-600" />
+                  Reseller Program
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                  <label className="flex items-center gap-3 cursor-pointer group py-3">
+                    <input
+                      type="checkbox"
+                      checked={formData.isResellerAvailable}
+                      onChange={(e) => setFormData({ ...formData, isResellerAvailable: e.target.checked })}
+                      className="w-5 h-5 text-emerald-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <span className="font-semibold text-gray-700 group-hover:text-emerald-600 transition-colors">
+                      🤝 Available for resellers
+                    </span>
+                  </label>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Reseller Price (৳){formData.isResellerAvailable ? ' *' : ''}
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="number"
+                        value={formData.resellerPrice}
+                        onChange={(e) => setFormData({ ...formData, resellerPrice: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none transition-colors text-gray-900 bg-white"
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-gray-500">
+                  Resellers see this price and only whether each size is in stock — never the stock quantity.
+                </p>
               </div>
             </div>
           )}

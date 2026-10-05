@@ -7,6 +7,27 @@ const {
     extractPublicId,
 } = require('../helpers/cloudinary');
 
+// Reseller price: empty/null clears it, otherwise must be a positive number
+const parseResellerPrice = (value) =>
+    value === undefined || value === null || value === '' ? null : Number(value);
+
+// Returns an error message, or null when the reseller fields are valid.
+// `existing` is the current product on update (null on create).
+const validateResellerFields = (isResellerAvailable, resellerPrice, existing) => {
+    if (isResellerAvailable !== undefined && typeof isResellerAvailable !== 'boolean') {
+        return 'isResellerAvailable must be true or false';
+    }
+    const price = resellerPrice !== undefined ? parseResellerPrice(resellerPrice) : existing?.resellerPrice ?? null;
+    if (price !== null && (!Number.isFinite(price) || price <= 0)) {
+        return 'Reseller price must be a positive number';
+    }
+    const enabled = isResellerAvailable !== undefined ? isResellerAvailable : existing?.isResellerAvailable;
+    if (enabled && price === null) {
+        return 'Set a reseller price before making the product available to resellers';
+    }
+    return null;
+};
+
 // @desc    Upload product image
 // @route   POST /api/admin/products/upload-image
 // @access  Private/Admin
@@ -78,6 +99,8 @@ exports.createProduct = async(req, res) => {
             metaDescription,
             sku,
             youtubeLink,
+            isResellerAvailable,
+            resellerPrice,
         } = req.body;
 
         // Validation
@@ -86,6 +109,11 @@ exports.createProduct = async(req, res) => {
                 success: false,
                 message: 'Please provide all required fields (name, description, price, category)',
             });
+        }
+
+        const resellerError = validateResellerFields(isResellerAvailable, resellerPrice, null);
+        if (resellerError) {
+            return res.status(400).json({ success: false, message: resellerError });
         }
 
         // Validate size variants if enabled
@@ -142,6 +170,8 @@ exports.createProduct = async(req, res) => {
             reviewCount: 0,
             sku: !hasSizeVariants && sku ? sku : undefined,
             youtubeLink: youtubeLink || undefined,
+            isResellerAvailable: isResellerAvailable === true,
+            resellerPrice: parseResellerPrice(resellerPrice),
         });
 
         res.status(201).json({
@@ -424,7 +454,14 @@ exports.updateProduct = async(req, res) => {
             metaDescription,
             sku,
             youtubeLink,
+            isResellerAvailable,
+            resellerPrice,
         } = req.body;
+
+        const resellerError = validateResellerFields(isResellerAvailable, resellerPrice, product);
+        if (resellerError) {
+            return res.status(400).json({ success: false, message: resellerError });
+        }
 
         // Update fields
         if (name) {
@@ -471,6 +508,8 @@ exports.updateProduct = async(req, res) => {
             product.sku = sku;
         }
         if (youtubeLink !== undefined) product.youtubeLink = youtubeLink;
+        if (typeof isResellerAvailable === 'boolean') product.isResellerAvailable = isResellerAvailable;
+        if (resellerPrice !== undefined) product.resellerPrice = parseResellerPrice(resellerPrice);
 
         await product.save();
 

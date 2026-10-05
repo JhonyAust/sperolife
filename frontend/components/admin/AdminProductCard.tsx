@@ -20,6 +20,8 @@ interface Product {
   salePrice?: number;
   category: string;
   brand?: string;
+  isResellerAvailable?: boolean;
+  resellerPrice?: number | null;
   images: string[];
   stock: number;
   rating: number;
@@ -184,6 +186,11 @@ export default function AdminProductCard({ product, onEdit, onDelete, onToggleSt
           {product.brand && (
             <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
               {product.brand}
+            </span>
+          )}
+          {product.isResellerAvailable && product.resellerPrice > 0 && (
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
+              🤝 Reseller ৳{product.resellerPrice}
             </span>
           )}
         </div>

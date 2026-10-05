@@ -26,6 +26,7 @@ exports.getAllOrders = async (req, res) => {
       status, 
       paymentStatus,
       paymentMethod,
+      orderSource,
       page = 1, 
       limit = 20, 
       search,
@@ -51,6 +52,13 @@ exports.getAllOrders = async (req, res) => {
     if (paymentMethod && paymentMethod !== 'all') {
       query.paymentMethod = paymentMethod;
     }
+
+    // Order source filter (orders created before this field existed count as website orders)
+    if (orderSource === 'reseller') {
+      query.orderSource = 'reseller';
+    } else if (orderSource === 'website') {
+      query.orderSource = { $ne: 'reseller' };
+    }
     
     // Search by order number, customer name, or phone
     if (search) {
@@ -73,6 +81,7 @@ exports.getAllOrders = async (req, res) => {
 
     const orders = await Order.find(query)
       .populate('userId', 'name email phone')
+      .populate('resellerId', 'name email')
       .populate('cartItems.product', 'name category')
       .sort(sort)
       .limit(parseInt(limit))
