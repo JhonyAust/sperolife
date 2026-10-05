@@ -430,7 +430,8 @@ const shippingCharge = hasSneakers
 
         // Redirect after animation
         setTimeout(() => {
-          router.push(`/order-confirmation/${data.order._id}`);
+          const tokenQuery = data.accessToken ? `?token=${encodeURIComponent(data.accessToken)}` : "";
+          router.push(`/order-confirmation/${data.order._id}${tokenQuery}`);
         }, 2000);
       }
     } catch (error) {

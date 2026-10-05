@@ -1,8 +1,26 @@
+const crypto = require('crypto');
 const Order = require('../models/Order');
 const Notification = require('../models/Notification');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon'); // ✅ Add Coupon import
 const { broadcastNotification, broadcastUnreadCount } = require('../routes/notificationSSE');
+
+const hashToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
+
+const isAdmin = (user) => user?.role === 'admin';
+
+// Owner, admin, or a guest holding the order's access token may view an order
+const canViewOrder = (order, user, token) => {
+  if (isAdmin(user)) return true;
+  if (order.userId) {
+    const ownerId = String(order.userId._id || order.userId);
+    return Boolean(user) && ownerId === String(user._id);
+  }
+  if (!order.guestAccessTokenHash || typeof token !== 'string' || !token) return false;
+  const expected = Buffer.from(order.guestAccessTokenHash, 'hex');
+  const actual = Buffer.from(hashToken(token), 'hex');
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+};
 
 // @desc    Create new order
 // @route   POST /api/order
@@ -10,7 +28,6 @@ const { broadcastNotification, broadcastUnreadCount } = require('../routes/notif
 exports.createOrder = async (req, res) => {
   try {
     const {
-      userId,
       cartItems,
       addressInfo,
       paymentMethod,
@@ -20,6 +37,9 @@ exports.createOrder = async (req, res) => {
       couponCode,
       discountAmount
     } = req.body;
+
+    // The order belongs to the authenticated user; a userId in the body is never trusted
+    const userId = req.user?._id || null;
 
     console.log("📦 Creating order:", { userId, itemCount: cartItems?.length, couponCode });
 
@@ -130,6 +150,13 @@ exports.createOrder = async (req, res) => {
       paymentStatus: 'pending'
     });
 
+    // Guests get a one-time token so they can view their order confirmation
+    let guestAccessToken = null;
+    if (!userId) {
+      guestAccessToken = crypto.randomBytes(24).toString('hex');
+      order.guestAccessTokenHash = hashToken(guestAccessToken);
+    }
+
     // Save order (this triggers the pre-save hook to generate orderNumber)
     await order.save();
     
@@ -182,10 +209,14 @@ exports.createOrder = async (req, res) => {
 
     console.log("✅ Order created:", order.orderNumber);
 
+    const orderData = order.toObject();
+    delete orderData.guestAccessTokenHash;
+
     res.status(201).json({
       success: true,
       message: 'Order placed successfully',
-      order
+      order: orderData,
+      ...(guestAccessToken && { accessToken: guestAccessToken })
     });
   } catch (error) {
     console.error('💥 Create order error:', error);
@@ -257,6 +288,13 @@ exports.getUserOrders = async (req, res) => {
     const { userId } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
+    if (String(req.user._id) !== String(userId) && !isAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view these orders'
+      });
+    }
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const orders = await Order.find({ userId })
@@ -292,20 +330,26 @@ exports.getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const order = await Order.findById(id)
+    const query = /^[0-9a-fA-F]{24}$/.test(id) ? { _id: id } : { orderNumber: String(id) };
+    const order = await Order.findOne(query)
+      .select('+guestAccessTokenHash')
       .populate('userId', 'name email phone')
       .populate('cartItems.product');
 
-    if (!order) {
+    // Respond 404 (not 403) so order ids can't be probed
+    if (!order || !canViewOrder(order, req.user, req.query.token)) {
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       });
     }
 
+    const orderData = order.toObject();
+    delete orderData.guestAccessTokenHash;
+
     res.json({
       success: true,
-      order
+      order: orderData
     });
   } catch (error) {
     console.error('Get order error:', error);

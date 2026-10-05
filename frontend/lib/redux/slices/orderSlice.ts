@@ -148,9 +148,11 @@ export const fetchUserOrders = createAsyncThunk(
 // Get order by ID
 export const fetchOrderById = createAsyncThunk(
   "order/fetchById",
-  async (orderId: string, { rejectWithValue }) => {
+  async (arg: string | { orderId: string; token?: string | null }, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(`/order/${orderId}`);
+      // Guests pass the access token returned when the order was placed
+      const { orderId, token } = typeof arg === "string" ? { orderId: arg, token: null } : arg;
+      const { data } = await api.get(`/order/${orderId}`, { params: token ? { token } : undefined });
       return data.order;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch order");

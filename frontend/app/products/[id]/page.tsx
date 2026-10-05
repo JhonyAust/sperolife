@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProductBySlug, fetchRelatedProducts } from "@/lib/redux/slices/productSlice";
 import { addToCart, addToCartDB } from "@/lib/redux/slices/cartSlice";
 import { toggleWishlistItem, addToWishlist, removeFromWishlist } from "@/lib/redux/slices/wishlistSlice";
+import ProductDescription from "@/components/products/ProductDescription";
 
 export default function ProductDetailsPage() {
   const router = useRouter();
@@ -469,9 +470,7 @@ const handleBuyNow = async () => {
 
             {/* Description */}
             {product.description && (
-              <div className="prose prose-sm">
-                <p className="text-[11px] sm:text-xs text-gray-700 leading-relaxed">{product.description}</p>
-              </div>
+              <ProductDescription description={product.description} features={product.features} />
             )}
 
             {/* Size Selection */}

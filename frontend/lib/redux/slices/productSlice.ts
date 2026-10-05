@@ -120,6 +120,7 @@ export const fetchProducts = createAsyncThunk(
       limit?: number;
       category?: string;
       subCategory?: string;
+      brand?: string;
       minPrice?: number;
       maxPrice?: number;
       search?: string;
@@ -139,6 +140,7 @@ export const fetchProducts = createAsyncThunk(
       if (params.limit) queryParams.append("limit", params.limit.toString());
       if (params.category) queryParams.append("category", params.category);
       if (params.subCategory) queryParams.append("subCategory", params.subCategory);
+      if (params.brand) queryParams.append("brand", params.brand);
       if (params.minPrice !== undefined) queryParams.append("minPrice", params.minPrice.toString());
       if (params.maxPrice !== undefined) queryParams.append("maxPrice", params.maxPrice.toString());
       if (params.search) queryParams.append("search", params.search);

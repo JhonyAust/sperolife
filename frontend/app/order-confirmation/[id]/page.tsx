@@ -42,7 +42,8 @@ export default function OrderConfirmation() {
 
   useEffect(() => {
     if (orderId) {
-      dispatch(fetchOrderById(orderId));
+      const token = new URLSearchParams(window.location.search).get("token");
+      dispatch(fetchOrderById({ orderId, token }));
     } else {
       router.push("/");
     }

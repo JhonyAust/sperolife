@@ -10,19 +10,20 @@ const {
     deleteOrder,
     getOrderStats
 } = require('../controllers/orderController');
+const { protect, admin, optionalAuth } = require('../middleware/auth');
 
-// Public routes
-router.post('/', createOrder);
+// Public route (guest checkout allowed; the order is linked to the logged-in user, if any)
+router.post('/', optionalAuth, createOrder);
 
-// User routes
-router.get('/user/:userId', getUserOrders);
-router.get('/:id', getOrderById);
+// Admin routes
+router.get('/admin/all', protect, admin, getAllOrders);
+router.get('/admin/stats', protect, admin, getOrderStats);
+router.put('/:id/status', protect, admin, updateOrderStatus);
+router.put('/:id/notes', protect, admin, updateOrderNotes);
+router.delete('/:id', protect, admin, deleteOrder);
 
-// Admin routes (add authentication middleware as needed)
-router.get('/admin/all', getAllOrders);
-router.get('/admin/stats', getOrderStats);
-router.put('/:id/status', updateOrderStatus);
-router.put('/:id/notes', updateOrderNotes);
-router.delete('/:id', deleteOrder);
+// User routes (ownership is checked in the controller)
+router.get('/user/:userId', protect, getUserOrders);
+router.get('/:id', optionalAuth, getOrderById);
 
 module.exports = router;

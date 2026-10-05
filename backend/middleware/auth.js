@@ -63,6 +63,18 @@ exports.admin = (req, res, next) => {
   }
 };
 
+// Reseller only middleware
+exports.reseller = (req, res, next) => {
+  if (req.user && req.user.role === 'reseller') {
+    next();
+  } else {
+    res.status(403).json({
+      success: false,
+      message: 'Reseller access required'
+    });
+  }
+};
+
 // Optional auth - doesn't fail if no token
 exports.optionalAuth = async (req, res, next) => {
   let token;

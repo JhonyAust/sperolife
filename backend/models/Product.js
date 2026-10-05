@@ -161,6 +161,17 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Reseller program: admin controls visibility and price for resellers
+    isResellerAvailable: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    resellerPrice: {
+      type: Number,
+      min: [0, 'Reseller price cannot be negative'],
+      default: null,
+    },
     // ✅ NEW: Hot Deals flag
     isHotDeals: {
       type: Boolean,
