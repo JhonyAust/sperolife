@@ -135,10 +135,10 @@ export default function Footer() {
                 <Phone className="w-4 h-4 mt-0.5 text-[#FE0002]" />
                 <span>+880 1750-873525</span>
               </li>
-              <li className="flex items-start gap-3 hover:text-[#FE0002] transition-colors duration-300">
+              {/* <li className="flex items-start gap-3 hover:text-[#FE0002] transition-colors duration-300">
               <MapPin className="w-4 h-4 mt-1 shrink-0 text-[#FE0002]" />
               <span>Shop: 1/01, 2nd floor, Eastern Banabithi Shopping Complex (10 tola market), Dhaka-1219.</span>
-            </li>
+            </li> */}
             </ul>
           </div>
         </div>
