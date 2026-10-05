@@ -11,6 +11,7 @@ exports.getAllProducts = async(req, res) => {
                 limit = 12,
                 category = '',
                 subCategory = '',
+                brand = '',
                 minPrice = 0,
                 maxPrice = 999999,
                 search = '',
@@ -34,6 +35,18 @@ exports.getAllProducts = async(req, res) => {
         // ✅ CASE-INSENSITIVE SubCategory filter
         if (subCategory) {
             query.subCategory = { $regex: new RegExp(`^${subCategory}$`, 'i') };
+        }
+
+        // ✅ CASE-INSENSITIVE Brand filter (comma-separated list matches any)
+        if (brand) {
+            const brands = String(brand)
+                .split(',')
+                .map((b) => b.trim())
+                .filter(Boolean)
+                .map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            if (brands.length > 0) {
+                query.brand = { $regex: new RegExp(`^\\s*(${brands.join('|')})\\s*$`, 'i') };
+            }
         }
 
         // Price range filter

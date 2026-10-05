@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, Trophy, Clock, ArrowRight, Flame } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "@/components/products/ProductCard";
@@ -9,23 +9,97 @@ import { getActiveBanners } from "@/lib/redux/slices/bannerSlice";
 import { fetchProducts } from "@/lib/redux/slices/productSlice";
 import { toast } from "react-hot-toast";
 
+// Homepage brand sections are shown in this order; any other sneaker brand follows alphabetically.
+// `aliases` are normalized spellings (see normalizeBrand) that belong to the same brand.
+const FEATURED_SNEAKER_BRANDS = [
+  { key: "nike", label: "Nike", aliases: ["nike"] },
+  { key: "adidas", label: "Adidas", aliases: ["adidas"] },
+  { key: "vans", label: "Vans", aliases: ["vans"] },
+  { key: "lv", label: "LV", aliases: ["lv", "louis vuitton", "louisvuitton"] },
+];
+const UNBRANDED_KEY = "__unbranded__";
+const SECTION_PRODUCT_LIMIT = 10;
+
+// "  Louis-Vuitton " -> "louis vuitton", "L.V." -> "lv"
+const normalizeBrand = (brand) =>
+  (brand || "")
+    .toLowerCase()
+    .replace(/[.'’]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+const getBrandKey = (brand) => {
+  const normalized = normalizeBrand(brand);
+  if (!normalized) return UNBRANDED_KEY;
+  const featured = FEATURED_SNEAKER_BRANDS.find((b) => b.aliases.includes(normalized));
+  return featured ? featured.key : normalized;
+};
+
+const isSneaker = (product) => (product.subCategory || "").toLowerCase().includes("sneaker");
+
+const isAccessory = (product) =>
+  !isSneaker(product) &&
+  ((product.category || "").toLowerCase() === "accessories" ||
+    (product.subCategory || "").toLowerCase().includes("accessor"));
+
+const sortByNewest = (arr) => [...arr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+// Keep only the first occurrence of each product id
+const uniqueById = (arr) => {
+  const seen = new Set();
+  return arr.filter((p) => {
+    if (!p?._id || seen.has(p._id)) return false;
+    seen.add(p._id);
+    return true;
+  });
+};
+
+// Groups sneaker products into one section per brand: featured brands first, then the rest A–Z,
+// then sneakers without a brand under "Other Brands".
+const buildSneakerBrandSections = (products) => {
+  const groups = new Map();
+
+  uniqueById(products.filter(isSneaker)).forEach((product) => {
+    const key = getBrandKey(product.brand);
+    if (!groups.has(key)) {
+      groups.set(key, { key, label: (product.brand || "").trim(), spellings: new Set(), products: [] });
+    }
+    const group = groups.get(key);
+    if (product.brand?.trim()) group.spellings.add(product.brand.trim());
+    group.products.push(product);
+  });
+
+  const toSection = (group, label) => ({
+    key: group.key,
+    label,
+    brandFilter: [...group.spellings].join(","),
+    totalCount: group.products.length,
+    products: sortByNewest(group.products).slice(0, SECTION_PRODUCT_LIMIT),
+  });
+
+  const featured = FEATURED_SNEAKER_BRANDS
+    .filter((b) => groups.has(b.key))
+    .map((b) => toSection(groups.get(b.key), b.label));
+
+  const featuredKeys = new Set(FEATURED_SNEAKER_BRANDS.map((b) => b.key));
+  const others = [...groups.values()]
+    .filter((g) => !featuredKeys.has(g.key) && g.key !== UNBRANDED_KEY)
+    .map((g) => toSection(g, g.label))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  const unbranded = groups.has(UNBRANDED_KEY) ? [toSection(groups.get(UNBRANDED_KEY), "Other Brands")] : [];
+
+  return [...featured, ...others, ...unbranded];
+};
+
 export default function ModernHomePage() {
   const router = useRouter();
   const dispatch = useDispatch();
   
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [activeTab, setActiveTab] = useState("new");
   const [isVisible, setIsVisible] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false); // ADD THIS
   const [allProducts, setAllProducts] = useState([]);
-  const [bestSellers, setBestSellers] = useState([]);
-  const [newArrivals, setNewArrivals] = useState([]);
-  const [discounts, setDiscounts] = useState([]);
-  const [hotDeals, setHotDeals] = useState([]);
-  // SubCategory filtered products
-  const [shirtsProducts, setShirtsProducts] = useState([]);
-  const [shakersProducts, setShakersProducts] = useState([]);
-  const [sneakersProducts, setSneakersProducts] = useState([]);
 
   // Get data from Redux
   const { banners, loading: bannersLoading } = useSelector((state) => state.banner || { banners: [], loading: false });
@@ -55,18 +129,13 @@ export default function ModernHomePage() {
       .sort((a, b) => a.position - b.position);
   }, [banners, isMobileDevice]);
 
-  const shuffleArray = (array) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
- const sortByNewest = (arr) => [...arr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  // One section per sneaker brand (Nike, Adidas, Vans, LV, then other brands)
+  const sneakerBrandSections = React.useMemo(() => buildSneakerBrandSections(allProducts), [allProducts]);
 
-
-  const [randomizedProducts, setRandomizedProducts] = useState([]);
+  const accessoryProducts = React.useMemo(
+    () => sortByNewest(uniqueById(allProducts.filter(isAccessory))),
+    [allProducts]
+  );
 
   // ✅ ADD: Detect device type on mount
   useEffect(() => {
@@ -100,77 +169,12 @@ export default function ModernHomePage() {
         console.error('❌ Banner fetch error:', error);
       });
     
-    dispatch(fetchProducts({ page: 1, limit: 100 })).then((res) => {
+    dispatch(fetchProducts({ page: 1, limit: 500 })).then((res) => {
       if (res?.payload?.products) {
-        const allProds = res.payload.products;
-        setAllProducts(allProds);
-        
-        // ✅ Randomize all products on page load
-
-        setRandomizedProducts(sortByNewest(allProds));
-        setBestSellers(sortByNewest(allProds.filter(p => p.isBestSeller)));
-        setHotDeals(sortByNewest(allProds.filter(p => p.isHotDeals)));
-        setNewArrivals(sortByNewest(allProds.filter(p => p.isNewArrival)));
-        // setRandomizedProducts(shuffleArray(allProds));
-        
-        // setBestSellers(shuffleArray(allProds.filter(p => p.isBestSeller)));
-        // setHotDeals(shuffleArray(allProds.filter(p => p.isHotDeals)));
-        // setNewArrivals(shuffleArray(allProds.filter(p => p.isNewArrival)));
+        setAllProducts(res.payload.products);
       }
     });
   }, [dispatch, isMobileDevice]); // ✅ Re-fetch when device type changes
-
-  // Filter subcategory products based on active tab
-  useEffect(() => {
-    if (allProducts.length > 0) {
-      filterSubCategoryProducts();
-    }
-  }, [activeTab, bestSellers, newArrivals, discounts, allProducts]);
-
-  const filterSubCategoryProducts = () => {
-    // ✅ Start with ALL products matching the active tab
-    let sourceProducts = [];
-
-    switch (activeTab) {
-      case "bestseller":
-        sourceProducts = allProducts.filter(p => p.isBestSeller);
-        break;
-      case "new":
-        sourceProducts = allProducts.filter(p => p.isNewArrival);
-        break;
-      case "hotdeals":
-        sourceProducts = allProducts.filter(p => p.isHotDeals);
-        break;
-      default:
-        sourceProducts = allProducts;
-    }
-
-    console.log(`📊 ${activeTab} - Total products:`, sourceProducts.length);
-
-    // Filter by subcategories
-    const shirts = sourceProducts.filter(p => {
-      const sub = p.subCategory?.toLowerCase() || '';
-      return sub.includes('shirt') && !sub.includes('shacket');
-    });
-    
-    const shakers = sourceProducts.filter(p => {
-      const sub = p.subCategory?.toLowerCase() || '';
-      return sub.includes('shacket');
-    });
-    
-    const sneakers = sourceProducts.filter(p => {
-      const sub = p.subCategory?.toLowerCase() || '';
-      return sub.includes('sneaker');
-    });
-
-    console.log(`👕 Shirts found: ${shirts.length}`);
-    console.log(`🧥 Shackets found: ${shakers.length}`);
-    console.log(`👟 Sneakers found: ${sneakers.length}`);
-
-    setShirtsProducts(shirts.slice(0, 5));
-    setShakersProducts(shakers.slice(0, 5));
-    setSneakersProducts(sneakers.slice(0, 5));
-  };
 
   useEffect(() => {
     if (activeBanners.length > 0) {
@@ -338,181 +342,68 @@ export default function ModernHomePage() {
         )}
       </section>
 
-      {/* Mobile Tabs Section */}
-      <section className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg">
-  <div className="flex overflow-x-auto hide-scrollbar">
-    <TabButton
-      active={activeTab === "new"}
-      onClick={() => setActiveTab("new")}
-      icon={<Clock className="w-4 h-4" />}
-      label="New Arrival"
-      color="blue"
-    />
-    <TabButton
-      active={activeTab === "bestseller"}
-      onClick={() => setActiveTab("bestseller")}
-      icon={<Trophy className="w-4 h-4" />}
-      label="Best Sellers"
-      color="amber"
-    />
-    <TabButton
-      active={activeTab === "hotdeals"}
-      onClick={() => setActiveTab("hotdeals")}
-      icon={<Flame className="w-4 h-4" />}
-      label="Hot Deals"
-      color="red"
-    />
-  </div>
-</section>
-
-      {/* Mobile Tab Content - WITH SUBCATEGORIES */}
-      <section className="md:hidden py-4 bg-white">
-        <div className="container mx-auto px-4 space-y-6">
-
-          {sneakersProducts.length > 0 && (
-            <SubCategoryRow
-              title="Sneakers"
-              icon="👟"
-              products={sneakersProducts}
-              loading={productsLoading}
-              onSeeAll={() => router.push(`/products?subCategory=sneakers`)}
-            />
-          )}
-          {shirtsProducts.length > 0 && (
-            <SubCategoryRow
-              title="Shirts"
-              icon="👕"
-              products={shirtsProducts}
-              loading={productsLoading}
-              onSeeAll={() => router.push(`/products?subCategory=shirts`)}
-            />
-          )}
-
-          {shakersProducts.length > 0 && (
-            <SubCategoryRow
-              title="Shackets"
-              icon="🧥"
-              products={shakersProducts}
-              loading={productsLoading}
-              onSeeAll={() => router.push(`/products?subCategory=shacket`)}
-            />
-          )}
-
-
-          {shirtsProducts.length === 0 && shakersProducts.length === 0 && sneakersProducts.length === 0 && (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500 text-sm">No products found for this category</p>
+      {/* Sneaker Brand Sections - one per brand, sneakers only */}
+      {productsLoading && allProducts.length === 0 ? (
+        <section className="py-4 lg:py-6 bg-white">
+          <div className="container mx-auto px-4 md:px-8 lg:px-16">
+            <HorizontalScroll products={[]} loading />
+          </div>
+        </section>
+      ) : (
+        sneakerBrandSections.map((section, index) => (
+          <section
+            key={section.key}
+            className={`py-4 lg:py-6 ${index % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          >
+            <div className="container mx-auto px-4 md:px-8 lg:px-16">
+              <SectionHeader
+                icon={<Footprints className="text-[#FD0002]" />}
+                badge={`${section.totalCount} ${section.totalCount === 1 ? "Pair" : "Pairs"}`}
+                title={section.label}
+                gradient="from-red-700 via-[#FD0002] to-red-500"
+                accentColor="red"
+                onViewAll={() => {
+                  const params = new URLSearchParams({ subCategory: "Sneakers" });
+                  if (section.brandFilter) {
+                    params.set("brand", section.brandFilter);
+                    params.set("brandLabel", section.label);
+                  }
+                  router.push(`/products?${params.toString()}`);
+                }}
+              />
+              <HorizontalScroll products={section.products} loading={false} />
             </div>
-          )}
-        </div>
-      </section>
+          </section>
+        ))
+      )}
 
-      {/* Desktop Sections - NOW WITH HORIZONTAL SCROLL */}
-      {/* Best Sellers - Desktop */}
-      {bestSellers.length > 0 && (
-        <section className="hidden md:block py-4 lg:py-6 bg-white">
+      {/* Accessories - bottom of homepage */}
+      {accessoryProducts.length > 0 && (
+        <section
+          className={`py-4 lg:py-6 ${sneakerBrandSections.length % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+        >
           <div className="container mx-auto px-4 md:px-8 lg:px-16">
             <SectionHeader
-              icon={<Trophy className="w-6 h-6 md:w-7 md:h-7 text-amber-600" />}
-              badge="Top Picks"
-              title="Best Sellers"
+              icon={<Watch className="text-amber-600" />}
+              badge="Complete Your Look"
+              title="Accessories"
               gradient="from-amber-700 via-amber-600 to-amber-500"
               accentColor="amber"
-              onViewAll={() => router.push("/products?bestSeller=true")}
+              onViewAll={() => router.push("/products?category=accessories")}
             />
-            <HorizontalScroll products={bestSellers} loading={productsLoading} />
+            <HorizontalScroll products={accessoryProducts.slice(0, SECTION_PRODUCT_LIMIT)} loading={false} />
           </div>
         </section>
       )}
 
-      {/* New Arrivals - Desktop */}
-      {newArrivals.length > 0 && (
-        <section className="hidden md:block py-4 lg:py-6 bg-[#EAEDED]">
-          <div className="container mx-auto px-4 md:px-8 lg:px-16">
-            <SectionHeader
-              icon={<Clock className="w-6 h-6 md:w-7 md:h-7 text-blue-700 animate-pulse" />}
-              badge="Just Landed"
-              title="New Arrivals"
-              gradient="from-blue-700 via-blue-600 to-blue-500"
-              accentColor="blue"
-              onViewAll={() => router.push("/products?newArrival=true")}
-            />
-            <HorizontalScroll products={newArrivals} loading={productsLoading} />
+      {!productsLoading && allProducts.length > 0 && sneakerBrandSections.length === 0 && accessoryProducts.length === 0 && (
+        <section className="py-12 bg-white">
+          <div className="container mx-auto px-4 text-center">
+            <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-500 text-sm md:text-base">No products available</p>
           </div>
         </section>
       )}
-
-      {hotDeals.length > 0 && (
-  <section className="hidden md:block py-4 lg:py-6 bg-white">
-    <div className="container mx-auto px-4 md:px-8 lg:px-16">
-      <SectionHeader
-        icon={<Flame className="w-6 h-6 md:w-7 md:h-7 text-red-600 animate-pulse" />}
-        badge="Limited Time"
-        title="Hot Deals"
-        gradient="from-red-700 via-[#FD0002] to-red-500"
-        accentColor="red"
-        onViewAll={() => router.push("/products?hotDeals=true")}
-      />
-      <HorizontalScroll products={hotDeals} loading={productsLoading} />
-    </div>
-  </section>
-)}
-
-      <section className="py-4 lg:py-6 bg-[#EAEDED]">
-  <div className="container mx-auto px-4 md:px-8 lg:px-16">
-    <div className="text-center mb-8">
-      <div className="flex items-center justify-center gap-3 mb-3">
-        <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
-          Complete Collection
-        </span>
-      </div>
-      <h2 className="text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r from-purple-700 via-[#FD0002] to-red-500 bg-clip-text text-transparent">
-        Explore Our Full Collection
-      </h2>
-    </div>
-
-    {productsLoading ? (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-        {[...Array(10)].map((_, i) => (
-          <div key={i} className="bg-gray-200 rounded-lg h-80 animate-pulse" />
-        ))}
-      </div>
-    ) : randomizedProducts.length > 0 ? (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-        {randomizedProducts.slice(0, 10).map((product, index) => (
-          <div
-            key={product._id}
-            className="animate-fade-in-up"
-            style={{ animationDelay: `${index * 0.03}s` }}
-          >
-            <ProductCard product={product} />
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="text-center py-16 bg-white rounded-lg">
-        <ShoppingBag className="w-16 h-16 md:w-20 md:h-20 mx-auto text-gray-300 mb-4" />
-        <p className="text-gray-500 text-lg md:text-xl">No products available</p>
-      </div>
-    )}
-
-    {randomizedProducts.length > 10 && (
-      <div className="flex justify-center mt-8">
-        <button
-          onClick={() => router.push("/products")}
-          className="bg-gradient-to-r from-[#FD0002] to-[#FF6B6B] hover:from-[#FF6B6B] hover:to-[#FD0002] text-white px-6 py-3 md:px-8 md:py-4 rounded-lg font-bold text-sm md:text-base transition-all duration-300 hover:scale-105 group"
-        >
-          <span className="flex items-center gap-2">
-            View All Products
-            <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
-          </span>
-        </button>
-      </div>
-    )}
-  </div>
-</section>
 
       <style jsx>{`
         @keyframes slide-up {
@@ -610,7 +501,7 @@ function SectionHeader({ icon, badge, title, gradient, accentColor, onViewAll })
   };
 
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           {React.cloneElement(icon, { className: `w-6 h-6 md:w-7 md:h-7 ${icon.props.className || ''}` })}
@@ -624,46 +515,12 @@ function SectionHeader({ icon, badge, title, gradient, accentColor, onViewAll })
       </div>
       <button
         onClick={onViewAll}
-        className={`hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-semibold text-sm transition-all duration-300 hover:scale-105 ${colors[accentColor]}`}
+        className={`flex flex-shrink-0 items-center gap-1 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border-2 font-semibold text-xs md:text-sm transition-all duration-300 hover:scale-105 ${colors[accentColor]}`}
       >
         View All
         <ArrowRight className="w-4 h-4" />
       </button>
     </div>
-  );
-}
-
-// Mobile Tab Button
-function TabButton({ active, onClick, icon, label, color }) {
-  const colors = {
-    amber: {
-      inactive: "text-amber-400 hover:bg-slate-700 hover:text-white",
-      active: "bg-gradient-to-r from-amber-600 to-orange-600 text-white"
-    },
-    blue: {
-      inactive: "text-blue-400 hover:bg-slate-700 hover:text-white",
-      active: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-    },
-    red: { // ✅ Used for Hot Deals
-      inactive: "text-rose-400 hover:bg-slate-700 hover:text-white",
-      active: "bg-gradient-to-r from-rose-600 to-pink-600 text-white"
-    }
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex-1 min-w-[120px] py-3 px-4 text-center font-semibold text-sm transition-all whitespace-nowrap overflow-hidden
-        ${active ? colors[color].active : colors[color].inactive}`}
-    >
-      {active && (
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine" />
-      )}
-      <div className="relative flex items-center justify-center gap-2">
-        {icon}
-        <span>{label}</span>
-      </div>
-    </button>
   );
 }
 
@@ -757,108 +614,6 @@ function HorizontalScroll({ products, title, loading }) {
             <ProductCard product={product} />
           </div>
         ))}
-      </div>
-
-      <style jsx>{`
-        @keyframes slide-in {
-          from {
-            opacity: 0;
-            transform: translateX(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        .animate-slide-in {
-          animation: slide-in 0.4s ease-out forwards;
-          opacity: 0;
-        }
-
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// SubCategory Row Component for Mobile - WITH HORIZONTAL SCROLL
-function SubCategoryRow({ title, icon, products, loading, onSeeAll }) {
-  const scrollRef = useRef(null);
-
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
-          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-        </div>
-        <div className="flex gap-3 overflow-hidden">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="w-[160px] flex-shrink-0 bg-gray-200 rounded-lg h-72 animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!products || products.length === 0) {
-    return null;
-  }
-
-  const hasMore = products.length >= 5;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
-          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-        </div>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="flex overflow-x-auto gap-3 pb-2 hide-scrollbar scroll-smooth"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch'
-        }}
-      >
-        {products.map((product, index) => (
-          <div
-            key={product._id}
-            className="w-[160px] flex-shrink-0 animate-slide-in"
-            style={{ animationDelay: `${index * 0.05}s` }}
-          >
-            <ProductCard product={product} />
-          </div>
-        ))}
-        
-        {hasMore && (
-          <div className="flex gap-2">
-          <button
-            onClick={onSeeAll}
-            className="w-[160px] flex-shrink-0 h-full min-h-[280px]  rounded-lg flex flex-col items-center justify-center gap-3 text-white hover:scale-105 transition-all duration-300 shadow-lg"
-          >
-            <ShoppingBag className="w-12 h-12 text-brand" />
-            <div className="text-center px-4">
-              <p className="font-bold text-lg text-gradient-primary">See All</p>
-              <p className="text-sm opacity-90 text-gradient-primary">{title}</p>
-            </div>
-            <ArrowRight className="w-6 h-6 text-brand" />
-          </button>
-
-          </div>
-        )}
       </div>
 
       <style jsx>{`

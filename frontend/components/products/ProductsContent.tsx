@@ -223,6 +223,7 @@ export default function ProductContent() {
   useEffect(() => {
     const category = searchParams.get('category');
     const subCategory = searchParams.get('subCategory');
+    const brand = searchParams.get('brand');
     const search = searchParams.get('search');
     const featured = searchParams.get('featured');
     const newArrival = searchParams.get('newArrival');
@@ -266,6 +267,10 @@ export default function ProductContent() {
     
     if (subCategory) {
       params.subCategory = subCategory.toLowerCase();
+    }
+
+    if (brand?.trim()) {
+      params.brand = brand.trim();
     }
     
     // Quick filters (except onSale - handled client-side)
@@ -472,7 +477,7 @@ export default function ProductContent() {
           </div>
 
           {/* Active Filters */}
-          {(activeFiltersCount > 0 || searchQuery) && (
+          {(activeFiltersCount > 0 || searchQuery || searchParams.get('brand')) && (
             <div className="mt-4 flex items-center gap-2 flex-wrap">
               <span className="text-sm font-semibold text-gray-600">Active:</span>
               {searchQuery && (
@@ -487,6 +492,18 @@ export default function ProductContent() {
                     setSelectedCategory(""); 
                     setSelectedSubCategory(""); 
                     updateURL({ category: '', subCategory: '' });
+                  }} 
+                />
+              )}
+              {searchParams.get('brand') && (
+                <FilterTag 
+                  label={`Brand: ${searchParams.get('brandLabel') || searchParams.get('brand')}`} 
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams);
+                    params.delete('brand');
+                    params.delete('brandLabel');
+                    const queryString = params.toString();
+                    router.replace(queryString ? `/products?${queryString}` : '/products', { scroll: false });
                   }} 
                 />
               )}
