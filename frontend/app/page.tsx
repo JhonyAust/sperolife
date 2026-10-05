@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch, Trophy, Clock, Flame } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "@/components/products/ProductCard";
+import BrandLogo from "@/components/products/BrandLogo";
 import { getActiveBanners } from "@/lib/redux/slices/bannerSlice";
 import { fetchProducts } from "@/lib/redux/slices/productSlice";
 import { toast } from "react-hot-toast";
@@ -46,13 +47,11 @@ const isAccessory = (product) =>
   ((product.category || "").toLowerCase() === "accessories" ||
     (product.subCategory || "").toLowerCase().includes("accessor"));
 
-// Mobile tabs: which product flag each tab filters by
-const TAB_FILTERS = {
-  new: (p) => p.isNewArrival,
-  bestseller: (p) => p.isBestSeller,
-  hotdeals: (p) => p.isHotDeals,
-};
 const MOBILE_SECTION_LIMIT = 5;
+const ACCESSORIES_KEY = "accessories";
+
+// DOM id for a homepage section, e.g. "new balance" -> "section-new-balance"
+const sectionId = (key) => `section-${String(key).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}`;
 
 const sortByNewest = (arr) => [...arr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -109,7 +108,9 @@ export default function ModernHomePage() {
   const dispatch = useDispatch();
   
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [activeTab, setActiveTab] = useState("new");
+  const [activeSection, setActiveSection] = useState(null);
+  const [headerHeight, setHeaderHeight] = useState(64);
+  const tabBarRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false); // ADD THIS
   const [allProducts, setAllProducts] = useState([]);
@@ -150,16 +151,62 @@ export default function ModernHomePage() {
     [allProducts]
   );
 
-  // Mobile: same brand sections + accessories, limited to the active tab (New / Best Sellers / Hot Deals)
-  const tabProducts = React.useMemo(
-    () => allProducts.filter(TAB_FILTERS[activeTab] || (() => true)),
-    [allProducts, activeTab]
-  );
-  const mobileBrandSections = React.useMemo(() => buildSneakerBrandSections(tabProducts), [tabProducts]);
-  const mobileAccessoryProducts = React.useMemo(
-    () => sortByNewest(uniqueById(tabProducts.filter(isAccessory))).slice(0, MOBILE_SECTION_LIMIT),
-    [tabProducts]
-  );
+  // Brand tabs: one per sneaker brand section, then Accessories
+  const tabs = React.useMemo(() => {
+    const brandTabs = sneakerBrandSections.map((section) => ({
+      key: section.key,
+      label: section.label,
+      logoKey: section.key === UNBRANDED_KEY ? null : String(section.key).replace(/\s+/g, ""),
+    }));
+    return accessoryProducts.length > 0
+      ? [...brandTabs, { key: ACCESSORIES_KEY, label: "Accessories", logoKey: null }]
+      : brandTabs;
+  }, [sneakerBrandSections, accessoryProducts.length]);
+
+  const scrollToSection = (key) => {
+    setActiveSection(key);
+    document.getElementById(sectionId(key))?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // The site header is sticky and changes height on scroll; keep the brand bar right below it
+  useEffect(() => {
+    const header = document.querySelector("header");
+    if (!header || typeof ResizeObserver === "undefined") return;
+    const update = () => setHeaderHeight(header.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  // Sticky header + brand bar: sections scrolled to from a tab land just below both
+  const stickyOffset = headerHeight + 72;
+
+  // Highlight the tab of the section currently in view
+  useEffect(() => {
+    if (tabs.length === 0 || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveSection(visible[0].target.dataset.sectionKey);
+      },
+      { rootMargin: `-${stickyOffset + 10}px 0px -50% 0px` }
+    );
+    tabs.forEach((tab) => {
+      const el = document.getElementById(sectionId(tab.key));
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [tabs, stickyOffset]);
+
+  // Keep the active tab visible inside the horizontally scrolling tab bar
+  useEffect(() => {
+    if (!activeSection || !tabBarRef.current) return;
+    const el = tabBarRef.current.querySelector(`[data-tab-key="${CSS.escape(String(activeSection))}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeSection]);
 
   const brandViewAllUrl = (section) => {
     const params = new URLSearchParams({ subCategory: "Sneakers" });
@@ -375,100 +422,90 @@ export default function ModernHomePage() {
         )}
       </section>
 
-      {/* Mobile Tabs Section */}
-      <section className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg">
-        <div className="flex overflow-x-auto hide-scrollbar">
-          <TabButton
-            active={activeTab === "new"}
-            onClick={() => setActiveTab("new")}
-            icon={<Clock className="w-4 h-4" />}
-            label="New Arrival"
-            color="blue"
-          />
-          <TabButton
-            active={activeTab === "bestseller"}
-            onClick={() => setActiveTab("bestseller")}
-            icon={<Trophy className="w-4 h-4" />}
-            label="Best Sellers"
-            color="amber"
-          />
-          <TabButton
-            active={activeTab === "hotdeals"}
-            onClick={() => setActiveTab("hotdeals")}
-            icon={<Flame className="w-4 h-4" />}
-            label="Hot Deals"
-            color="red"
-          />
-        </div>
-      </section>
+      {/* Brand Tabs - sticky, one per brand with its logo; tap to jump to that section */}
+      {tabs.length > 0 && (
+        <nav
+          aria-label="Shop by brand"
+          className="sticky z-40 bg-white/95 backdrop-blur border-b border-gray-200 shadow-sm"
+          style={{ top: headerHeight }}
+        >
+          <div
+            ref={tabBarRef}
+            className="container mx-auto px-3 md:px-8 lg:px-16 flex gap-2 md:gap-3 overflow-x-auto hide-scrollbar py-2.5"
+          >
+            {tabs.map((tab) => (
+              <BrandTab
+                key={tab.key}
+                tab={tab}
+                active={activeSection === tab.key}
+                onClick={() => scrollToSection(tab.key)}
+              />
+            ))}
+          </div>
+        </nav>
+      )}
 
-      {/* Mobile Tab Content - one row per sneaker brand, then accessories */}
-      <section className="md:hidden py-4 bg-white">
-        <div className="container mx-auto px-4 space-y-6">
-          {mobileBrandSections.map((section) => (
-            <SubCategoryRow
-              key={section.key}
-              title={section.label}
-              icon="👟"
-              products={section.products.slice(0, MOBILE_SECTION_LIMIT)}
-              loading={productsLoading}
-              onSeeAll={() => router.push(brandViewAllUrl(section))}
-            />
-          ))}
-
-          {mobileAccessoryProducts.length > 0 && (
-            <SubCategoryRow
-              title="Accessories"
-              icon="⌚"
-              products={mobileAccessoryProducts}
-              loading={productsLoading}
-              onSeeAll={() => router.push("/products?category=accessories")}
-            />
-          )}
-
-          {!productsLoading && mobileBrandSections.length === 0 && mobileAccessoryProducts.length === 0 && (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500 text-sm">No products found for this category</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Desktop/Tablet: Sneaker Brand Sections - one per brand, sneakers only */}
-      {productsLoading && allProducts.length === 0 ? (
-        <section className="hidden md:block py-4 lg:py-6 bg-white">
+      {productsLoading && allProducts.length === 0 && (
+        <section className="py-4 lg:py-6 bg-white">
           <div className="container mx-auto px-4 md:px-8 lg:px-16">
             <HorizontalScroll products={[]} loading />
           </div>
         </section>
-      ) : (
-        sneakerBrandSections.map((section, index) => (
-          <section
-            key={section.key}
-            className={`hidden md:block py-4 lg:py-6 ${index % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
-          >
-            <div className="container mx-auto px-4 md:px-8 lg:px-16">
-              <SectionHeader
-                icon={<Footprints className="text-[#FD0002]" />}
-                badge={`${section.totalCount} ${section.totalCount === 1 ? "Pair" : "Pairs"}`}
-                title={section.label}
-                gradient="from-red-700 via-[#FD0002] to-red-500"
-                accentColor="red"
-                onViewAll={() => router.push(brandViewAllUrl(section))}
-              />
-              <HorizontalScroll products={section.products} loading={false} />
-            </div>
-          </section>
-        ))
       )}
+
+      {/* Sneaker Brand Sections - one per brand, sneakers only */}
+      {sneakerBrandSections.map((section, index) => (
+        <section
+          key={section.key}
+          id={sectionId(section.key)}
+          data-section-key={section.key}
+          className={`py-4 lg:py-6 ${index % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          style={{ scrollMarginTop: stickyOffset }}
+        >
+          {/* Mobile */}
+          <div className="md:hidden container mx-auto px-4">
+            <SubCategoryRow
+              title={section.label}
+              icon={<SectionLogo logoKey={section.key === UNBRANDED_KEY ? null : String(section.key).replace(/\s+/g, "")} label={section.label} />}
+              products={section.products.slice(0, MOBILE_SECTION_LIMIT)}
+              loading={false}
+              onSeeAll={() => router.push(brandViewAllUrl(section))}
+            />
+          </div>
+
+          {/* Tablet / Desktop */}
+          <div className="hidden md:block container mx-auto px-4 md:px-8 lg:px-16">
+            <SectionHeader
+              icon={<SectionLogo logoKey={section.key === UNBRANDED_KEY ? null : String(section.key).replace(/\s+/g, "")} label={section.label} />}
+              badge={`${section.totalCount} ${section.totalCount === 1 ? "Pair" : "Pairs"}`}
+              title={section.label}
+              gradient="from-red-700 via-[#FD0002] to-red-500"
+              accentColor="red"
+              onViewAll={() => router.push(brandViewAllUrl(section))}
+            />
+            <HorizontalScroll products={section.products} loading={false} />
+          </div>
+        </section>
+      ))}
 
       {/* Accessories - bottom of homepage */}
       {accessoryProducts.length > 0 && (
         <section
-          className={`hidden md:block py-4 lg:py-6 ${sneakerBrandSections.length % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          id={sectionId(ACCESSORIES_KEY)}
+          data-section-key={ACCESSORIES_KEY}
+          className={`py-4 lg:py-6 ${sneakerBrandSections.length % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          style={{ scrollMarginTop: stickyOffset }}
         >
-          <div className="container mx-auto px-4 md:px-8 lg:px-16">
+          <div className="md:hidden container mx-auto px-4">
+            <SubCategoryRow
+              title="Accessories"
+              icon={<Watch className="w-6 h-6 text-amber-600" />}
+              products={accessoryProducts.slice(0, MOBILE_SECTION_LIMIT)}
+              loading={false}
+              onSeeAll={() => router.push("/products?category=accessories")}
+            />
+          </div>
+          <div className="hidden md:block container mx-auto px-4 md:px-8 lg:px-16">
             <SectionHeader
               icon={<Watch className="text-amber-600" />}
               badge="Complete Your Look"
@@ -483,7 +520,7 @@ export default function ModernHomePage() {
       )}
 
       {!productsLoading && allProducts.length > 0 && sneakerBrandSections.length === 0 && accessoryProducts.length === 0 && (
-        <section className="hidden md:block py-12 bg-white">
+        <section className="py-12 bg-white">
           <div className="container mx-auto px-4 text-center">
             <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
             <p className="text-gray-500 text-sm md:text-base">No products available</p>
@@ -610,37 +647,55 @@ function SectionHeader({ icon, badge, title, gradient, accentColor, onViewAll })
   );
 }
 
-// Mobile Tab Button
-function TabButton({ active, onClick, icon, label, color }) {
-  const colors = {
-    amber: {
-      inactive: "text-amber-400 hover:bg-slate-700 hover:text-white",
-      active: "bg-gradient-to-r from-amber-600 to-orange-600 text-white"
-    },
-    blue: {
-      inactive: "text-blue-400 hover:bg-slate-700 hover:text-white",
-      active: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-    },
-    red: { // ✅ Used for Hot Deals
-      inactive: "text-rose-400 hover:bg-slate-700 hover:text-white",
-      active: "bg-gradient-to-r from-rose-600 to-pink-600 text-white"
-    }
-  };
-
+// Brand Tab - logo chip in the sticky brand bar
+function BrandTab({ tab, active, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`relative flex-1 min-w-[120px] py-3 px-4 text-center font-semibold text-sm transition-all whitespace-nowrap overflow-hidden
-        ${active ? colors[color].active : colors[color].inactive}`}
+      data-tab-key={tab.key}
+      aria-current={active ? "true" : undefined}
+      className={`flex-shrink-0 flex items-center gap-2 h-11 md:h-12 px-3.5 md:px-4 rounded-full border-2 text-sm font-bold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FD0002] focus-visible:ring-offset-1 ${
+        active
+          ? "bg-gray-900 border-gray-900 text-white shadow-md"
+          : "bg-white border-gray-200 text-gray-900 hover:border-gray-400"
+      }`}
     >
-      {active && (
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine" />
-      )}
-      <div className="relative flex items-center justify-center gap-2">
-        {icon}
-        <span>{label}</span>
-      </div>
+      <TabIcon tab={tab} active={active} />
+      <span className="whitespace-nowrap">{tab.label}</span>
     </button>
+  );
+}
+
+function TabIcon({ tab, active }) {
+  if (tab.key === ACCESSORIES_KEY) {
+    return <Watch className={`w-5 h-5 ${active ? "text-white" : "text-amber-600"}`} />;
+  }
+  if (!tab.logoKey) {
+    return <Footprints className={`w-5 h-5 ${active ? "text-white" : "text-[#FD0002]"}`} />;
+  }
+  return (
+    <span className={`flex items-center justify-center h-7 min-w-7 rounded-full ${active ? "bg-white px-1" : ""}`}>
+      <BrandLogo
+        brandKey={tab.logoKey}
+        label={tab.label}
+        className={`h-6 w-6 ${active ? "text-gray-900" : "text-black"}`}
+        fallback={<Footprints className={`w-5 h-5 ${active ? "text-gray-900" : "text-[#FD0002]"}`} />}
+      />
+    </span>
+  );
+}
+
+// Brand logo next to a mobile section title
+function SectionLogo({ logoKey, label }) {
+  if (!logoKey) return <Footprints className="w-6 h-6 text-[#FD0002]" />;
+  return (
+    <BrandLogo
+      brandKey={logoKey}
+      label={label}
+      className="h-7 w-7 text-black"
+      fallback={<Footprints className="w-6 h-6 text-[#FD0002]" />}
+    />
   );
 }
 
@@ -774,7 +829,7 @@ function SubCategoryRow({ title, icon, products, loading, onSeeAll }) {
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
+          <span className="text-2xl flex items-center">{icon}</span>
           <h3 className="text-lg font-bold text-gray-800">{title}</h3>
         </div>
         <div className="flex gap-3 overflow-hidden">
@@ -796,7 +851,7 @@ function SubCategoryRow({ title, icon, products, loading, onSeeAll }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
+          <span className="text-2xl flex items-center">{icon}</span>
           <h3 className="text-lg font-bold text-gray-800">{title}</h3>
         </div>
       </div>
