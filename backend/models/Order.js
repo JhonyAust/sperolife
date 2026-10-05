@@ -25,6 +25,11 @@ const OrderSchema = new mongoose.Schema({
         ref: 'User',
         default: null
     },
+    // SHA-256 of the one-time token that lets a guest view their own order
+    guestAccessTokenHash: {
+        type: String,
+        select: false
+    },
     cartItems: [{
         product: {
             type: mongoose.Schema.Types.ObjectId,
