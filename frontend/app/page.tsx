@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch, Trophy, Clock, Flame } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "@/components/products/ProductCard";
@@ -35,12 +35,24 @@ const getBrandKey = (brand) => {
   return featured ? featured.key : normalized;
 };
 
-const isSneaker = (product) => (product.subCategory || "").toLowerCase().includes("sneaker");
+const isShirt = (product) => (product.subCategory || "").toLowerCase().includes("shirt");
+
+const isSneaker = (product) =>
+  !isShirt(product) && (product.subCategory || "").toLowerCase().includes("sneaker");
 
 const isAccessory = (product) =>
   !isSneaker(product) &&
+  !isShirt(product) &&
   ((product.category || "").toLowerCase() === "accessories" ||
     (product.subCategory || "").toLowerCase().includes("accessor"));
+
+// Mobile tabs: which product flag each tab filters by
+const TAB_FILTERS = {
+  new: (p) => p.isNewArrival,
+  bestseller: (p) => p.isBestSeller,
+  hotdeals: (p) => p.isHotDeals,
+};
+const MOBILE_SECTION_LIMIT = 5;
 
 const sortByNewest = (arr) => [...arr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -97,6 +109,7 @@ export default function ModernHomePage() {
   const dispatch = useDispatch();
   
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeTab, setActiveTab] = useState("new");
   const [isVisible, setIsVisible] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false); // ADD THIS
   const [allProducts, setAllProducts] = useState([]);
@@ -136,6 +149,26 @@ export default function ModernHomePage() {
     () => sortByNewest(uniqueById(allProducts.filter(isAccessory))),
     [allProducts]
   );
+
+  // Mobile: same brand sections + accessories, limited to the active tab (New / Best Sellers / Hot Deals)
+  const tabProducts = React.useMemo(
+    () => allProducts.filter(TAB_FILTERS[activeTab] || (() => true)),
+    [allProducts, activeTab]
+  );
+  const mobileBrandSections = React.useMemo(() => buildSneakerBrandSections(tabProducts), [tabProducts]);
+  const mobileAccessoryProducts = React.useMemo(
+    () => sortByNewest(uniqueById(tabProducts.filter(isAccessory))).slice(0, MOBILE_SECTION_LIMIT),
+    [tabProducts]
+  );
+
+  const brandViewAllUrl = (section) => {
+    const params = new URLSearchParams({ subCategory: "Sneakers" });
+    if (section.brandFilter) {
+      params.set("brand", section.brandFilter);
+      params.set("brandLabel", section.label);
+    }
+    return `/products?${params.toString()}`;
+  };
 
   // ✅ ADD: Detect device type on mount
   useEffect(() => {
@@ -342,9 +375,69 @@ export default function ModernHomePage() {
         )}
       </section>
 
-      {/* Sneaker Brand Sections - one per brand, sneakers only */}
+      {/* Mobile Tabs Section */}
+      <section className="md:hidden sticky top-0 z-40 bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg">
+        <div className="flex overflow-x-auto hide-scrollbar">
+          <TabButton
+            active={activeTab === "new"}
+            onClick={() => setActiveTab("new")}
+            icon={<Clock className="w-4 h-4" />}
+            label="New Arrival"
+            color="blue"
+          />
+          <TabButton
+            active={activeTab === "bestseller"}
+            onClick={() => setActiveTab("bestseller")}
+            icon={<Trophy className="w-4 h-4" />}
+            label="Best Sellers"
+            color="amber"
+          />
+          <TabButton
+            active={activeTab === "hotdeals"}
+            onClick={() => setActiveTab("hotdeals")}
+            icon={<Flame className="w-4 h-4" />}
+            label="Hot Deals"
+            color="red"
+          />
+        </div>
+      </section>
+
+      {/* Mobile Tab Content - one row per sneaker brand, then accessories */}
+      <section className="md:hidden py-4 bg-white">
+        <div className="container mx-auto px-4 space-y-6">
+          {mobileBrandSections.map((section) => (
+            <SubCategoryRow
+              key={section.key}
+              title={section.label}
+              icon="👟"
+              products={section.products.slice(0, MOBILE_SECTION_LIMIT)}
+              loading={productsLoading}
+              onSeeAll={() => router.push(brandViewAllUrl(section))}
+            />
+          ))}
+
+          {mobileAccessoryProducts.length > 0 && (
+            <SubCategoryRow
+              title="Accessories"
+              icon="⌚"
+              products={mobileAccessoryProducts}
+              loading={productsLoading}
+              onSeeAll={() => router.push("/products?category=accessories")}
+            />
+          )}
+
+          {!productsLoading && mobileBrandSections.length === 0 && mobileAccessoryProducts.length === 0 && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500 text-sm">No products found for this category</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Desktop/Tablet: Sneaker Brand Sections - one per brand, sneakers only */}
       {productsLoading && allProducts.length === 0 ? (
-        <section className="py-4 lg:py-6 bg-white">
+        <section className="hidden md:block py-4 lg:py-6 bg-white">
           <div className="container mx-auto px-4 md:px-8 lg:px-16">
             <HorizontalScroll products={[]} loading />
           </div>
@@ -353,7 +446,7 @@ export default function ModernHomePage() {
         sneakerBrandSections.map((section, index) => (
           <section
             key={section.key}
-            className={`py-4 lg:py-6 ${index % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+            className={`hidden md:block py-4 lg:py-6 ${index % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
           >
             <div className="container mx-auto px-4 md:px-8 lg:px-16">
               <SectionHeader
@@ -362,14 +455,7 @@ export default function ModernHomePage() {
                 title={section.label}
                 gradient="from-red-700 via-[#FD0002] to-red-500"
                 accentColor="red"
-                onViewAll={() => {
-                  const params = new URLSearchParams({ subCategory: "Sneakers" });
-                  if (section.brandFilter) {
-                    params.set("brand", section.brandFilter);
-                    params.set("brandLabel", section.label);
-                  }
-                  router.push(`/products?${params.toString()}`);
-                }}
+                onViewAll={() => router.push(brandViewAllUrl(section))}
               />
               <HorizontalScroll products={section.products} loading={false} />
             </div>
@@ -380,7 +466,7 @@ export default function ModernHomePage() {
       {/* Accessories - bottom of homepage */}
       {accessoryProducts.length > 0 && (
         <section
-          className={`py-4 lg:py-6 ${sneakerBrandSections.length % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          className={`hidden md:block py-4 lg:py-6 ${sneakerBrandSections.length % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
         >
           <div className="container mx-auto px-4 md:px-8 lg:px-16">
             <SectionHeader
@@ -397,7 +483,7 @@ export default function ModernHomePage() {
       )}
 
       {!productsLoading && allProducts.length > 0 && sneakerBrandSections.length === 0 && accessoryProducts.length === 0 && (
-        <section className="py-12 bg-white">
+        <section className="hidden md:block py-12 bg-white">
           <div className="container mx-auto px-4 text-center">
             <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
             <p className="text-gray-500 text-sm md:text-base">No products available</p>
@@ -524,6 +610,40 @@ function SectionHeader({ icon, badge, title, gradient, accentColor, onViewAll })
   );
 }
 
+// Mobile Tab Button
+function TabButton({ active, onClick, icon, label, color }) {
+  const colors = {
+    amber: {
+      inactive: "text-amber-400 hover:bg-slate-700 hover:text-white",
+      active: "bg-gradient-to-r from-amber-600 to-orange-600 text-white"
+    },
+    blue: {
+      inactive: "text-blue-400 hover:bg-slate-700 hover:text-white",
+      active: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+    },
+    red: { // ✅ Used for Hot Deals
+      inactive: "text-rose-400 hover:bg-slate-700 hover:text-white",
+      active: "bg-gradient-to-r from-rose-600 to-pink-600 text-white"
+    }
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex-1 min-w-[120px] py-3 px-4 text-center font-semibold text-sm transition-all whitespace-nowrap overflow-hidden
+        ${active ? colors[color].active : colors[color].inactive}`}
+    >
+      {active && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine" />
+      )}
+      <div className="relative flex items-center justify-center gap-2">
+        {icon}
+        <span>{label}</span>
+      </div>
+    </button>
+  );
+}
+
 // Horizontal Scroll Component - SAME AS HOMEPAGE
 function HorizontalScroll({ products, title, loading }) {
   const scrollRef = useRef(null);
@@ -614,6 +734,108 @@ function HorizontalScroll({ products, title, loading }) {
             <ProductCard product={product} />
           </div>
         ))}
+      </div>
+
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            opacity: 0;
+            transform: translateX(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .animate-slide-in {
+          animation: slide-in 0.4s ease-out forwards;
+          opacity: 0;
+        }
+
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// SubCategory Row Component for Mobile - WITH HORIZONTAL SCROLL
+function SubCategoryRow({ title, icon, products, loading, onSeeAll }) {
+  const scrollRef = useRef(null);
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{icon}</span>
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        </div>
+        <div className="flex gap-3 overflow-hidden">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="w-[160px] flex-shrink-0 bg-gray-200 rounded-lg h-72 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return null;
+  }
+
+  const hasMore = products.length >= 5;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{icon}</span>
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto gap-3 pb-2 hide-scrollbar scroll-smooth"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        {products.map((product, index) => (
+          <div
+            key={product._id}
+            className="w-[160px] flex-shrink-0 animate-slide-in"
+            style={{ animationDelay: `${index * 0.05}s` }}
+          >
+            <ProductCard product={product} />
+          </div>
+        ))}
+        
+        {hasMore && (
+          <div className="flex gap-2">
+          <button
+            onClick={onSeeAll}
+            className="w-[160px] flex-shrink-0 h-full min-h-[280px]  rounded-lg flex flex-col items-center justify-center gap-3 text-white hover:scale-105 transition-all duration-300 shadow-lg"
+          >
+            <ShoppingBag className="w-12 h-12 text-brand" />
+            <div className="text-center px-4">
+              <p className="font-bold text-lg text-gradient-primary">See All</p>
+              <p className="text-sm opacity-90 text-gradient-primary">{title}</p>
+            </div>
+            <ArrowRight className="w-6 h-6 text-brand" />
+          </button>
+
+          </div>
+        )}
       </div>
 
       <style jsx>{`
