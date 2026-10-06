@@ -1,5 +1,6 @@
 // backend/controllers/productController.js
 const Product = require('../models/Product');
+const { OUT_OF_STOCK_QUERY } = require('../helpers/preorder');
 
 // @desc    Get all products with filters
 // @route   GET /api/products
@@ -22,6 +23,7 @@ exports.getAllProducts = async(req, res) => {
                 isBestSeller,
                 isHotDeals,
                 onSale, // ✅ NEW: Added sale filter
+                preorder,
         } = req.query;
 
         // Build query - only show active products
@@ -119,6 +121,11 @@ exports.getAllProducts = async(req, res) => {
         }
         if (isHotDeals === 'true') {
             query.isHotDeals = true;
+        }
+        // Pre-order products that are currently out of stock
+        if (preorder === 'true') {
+            query.isPreorderEnabled = true;
+            query.$and = [...(query.$and || []), OUT_OF_STOCK_QUERY];
         }
 
 

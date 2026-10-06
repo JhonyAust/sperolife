@@ -495,6 +495,7 @@ exports.cancelResellerOrder = async (req, res) => {
     }
 
     for (const item of order.cartItems) {
+      if (item.isPreorder) continue;
       await releaseStock(item.product, item.size, item.quantity);
     }
 

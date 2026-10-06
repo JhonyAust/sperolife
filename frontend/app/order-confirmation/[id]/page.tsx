@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { fetchOrderById } from "@/lib/redux/slices/orderSlice";
+import PreorderBadge from "@/components/products/PreorderBadge";
 import Confetti from "react-confetti";
 import { toast } from "sonner";
 
@@ -471,6 +472,7 @@ export default function OrderConfirmation() {
                       <span>•</span>
                       <span>Qty: {item.quantity}</span>
                     </div>
+                    {item.isPreorder && <PreorderBadge note={item.preorderNote} className="mt-1" />}
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold text-indigo-600">৳{item.price * item.quantity}</p>

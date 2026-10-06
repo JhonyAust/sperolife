@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Heart, ShoppingCart, X, Check, Zap } from "lucide-react";
+import { Heart, ShoppingCart, X, Check, Zap, Clock } from "lucide-react";
+import { PREORDER_MAX_QUANTITY, getSizeStock, getTotalStock, isPreorderable } from "@/lib/preorder";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, addToCartDB } from "@/lib/redux/slices/cartSlice";
@@ -37,6 +38,8 @@ interface Product {
   discountPercentage?: number;
   stockStatus?: string;
   isNewArrival?: boolean;
+  isPreorderEnabled?: boolean;
+  preorderNote?: string;
 }
 
 interface ProductCardProps {
@@ -71,8 +74,13 @@ export default function ProductCard({ product }: ProductCardProps) {
     ? product.discountPercentage || Math.round(((product.price - product.salePrice!) / product.price) * 100) 
     : 0;
   
-  const stockCount = product.totalStock || product.stock || 0;
+  const stockCount = getTotalStock(product);
   const isOutOfStock = stockCount === 0;
+  // Fully out of stock, but the admin allows pre-orders
+  const canPreorder = isOutOfStock && Boolean(product.isPreorderEnabled);
+  const canBuy = !isOutOfStock || canPreorder;
+  const selectedSizeStock = getSizeStock(product, selectedSize);
+  const selectedIsPreorder = isPreorderable(product, selectedSizeStock);
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -155,9 +163,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         size: selectedSize || 'One Size',
         quantity: 1,
         subCategory: product.subCategory,
-        stock: product.hasSizeVariants 
-          ? product.sizeVariants?.find(v => v.size === selectedSize)?.stock || 0
-          : product.stock
+        stock: selectedIsPreorder ? PREORDER_MAX_QUANTITY : selectedSizeStock,
+        isPreorder: selectedIsPreorder,
+        preorderNote: selectedIsPreorder ? product.preorderNote || '' : '',
       };
       
       dispatch(addToCart(cartItem));
@@ -231,19 +239,26 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
 
-        {/* Out of Stock Overlay */}
+        {/* Stock badge - image stays clear */}
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
-            <div className="bg-white text-gray-900 px-1 py-1  rounded-full font-semibold text-[8px] sm:text-[10px] shadow-xl">
-              Out of Stock
-            </div>
+          <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-10">
+            {canPreorder ? (
+              <div className="flex items-center gap-1 bg-amber-500 text-white px-2 py-1 rounded-full font-bold text-[9px] sm:text-[11px] shadow-lg">
+                <Clock className="w-3 h-3" />
+                Pre-order
+              </div>
+            ) : (
+              <div className="bg-gray-900/85 text-white px-2 py-1 rounded-full font-bold text-[9px] sm:text-[11px] shadow-lg">
+                Out of Stock
+              </div>
+            )}
           </div>
         )}
 
         {/* Wishlist Button */}
         <button
           onClick={handleWishlistToggle}
-          disabled={isOutOfStock || togglingWishlist}
+          disabled={togglingWishlist}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 z-20 group/wishlist"
         >
           <div className="relative">
@@ -277,12 +292,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Add to Cart Button */}
         {!showSizeModal && (
           <div className={`absolute bottom-0 left-0 right-0 transform transition-all duration-300 ${
-            isHovered && !isOutOfStock ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+            isHovered && canBuy ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
           }`}>
             <button
               onClick={handleAddToCart}
-              disabled={isOutOfStock || addingToCart}
-              className="relative w-full bg-[#FD0002] text-white py-2.5 sm:py-3.5 font-semibold text-sm sm:text-base hover:bg-[#E00002] transition-colors duration-300 flex items-center justify-center gap-2"
+              disabled={!canBuy || addingToCart}
+              className={`relative w-full text-white py-2.5 sm:py-3.5 font-semibold text-sm sm:text-base transition-colors duration-300 flex items-center justify-center gap-2 ${
+                canPreorder ? "bg-amber-500 hover:bg-amber-600" : "bg-[#FD0002] hover:bg-[#E00002]"
+              }`}
               style={{ overflow: 'hidden' }}
             >
               {/* Shimmer Effect */}
@@ -297,8 +314,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </>
               ) : (
                 <>
-                  <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
-                  <span className="relative z-10">Add to Cart</span>
+                  {canPreorder ? (
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
+                  )}
+                  <span className="relative z-10">{canPreorder ? "Pre-order" : "Add to Cart"}</span>
                 </>
               )}
             </button>
@@ -376,14 +397,20 @@ export default function ProductCard({ product }: ProductCardProps) {
                     Available Sizes
                   </p>
                   <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
-                    {product.sizeVariants?.map((variant) => (
+                    {product.sizeVariants?.map((variant) => {
+                      const sizePreorder = isPreorderable(product, variant.stock);
+                      return (
                       <button
                         key={variant.size}
                         onClick={(e) => handleSizeSelect(e, variant.size)}
-                        disabled={variant.stock === 0}
+                        disabled={variant.stock === 0 && !sizePreorder}
                         className={`relative p-1 sm:p-3 rounded-lg font-semibold text-center transition-all duration-200 border-2 ${
                           selectedSize === variant.size
-                            ? "border-[#FD0002] bg-[#FD0002] text-white shadow-lg scale-105"
+                            ? sizePreorder
+                              ? "border-amber-500 bg-amber-500 text-white shadow-lg scale-105"
+                              : "border-[#FD0002] bg-[#FD0002] text-white shadow-lg scale-105"
+                            : sizePreorder
+                            ? "border-dashed border-amber-400 bg-amber-50 text-amber-900 hover:border-amber-500"
                             : variant.stock === 0
                             ? "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
                             : "border-gray-200 bg-white text-gray-900 hover:border-[#FD0002] hover:shadow-md"
@@ -399,19 +426,34 @@ export default function ProductCard({ product }: ProductCardProps) {
                           </div>
                         )}
                                                 
-                        {variant.stock === 0 && (
+                        {sizePreorder && (
+                          <div className={`text-[6px] sm:text-[9px] mt-0.5 font-bold uppercase ${
+                            selectedSize === variant.size ? "text-white/90" : "text-amber-700"
+                          }`}>
+                            Pre-order
+                          </div>
+                        )}
+
+                        {variant.stock === 0 && !sizePreorder && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-full h-0.5 bg-gray-300 rotate-[-45deg] rounded-full" />
                           </div>
                         )}
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
               {/* Fixed Bottom Button */}
               <div className="p-3 sm:p-4 border-t border-gray-200 bg-white flex-shrink-0">
+                {selectedSize && selectedIsPreorder && (
+                  <p className="mb-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] sm:text-xs text-amber-900">
+                    <span className="font-bold">Pre-order:</span> this size is out of stock.{" "}
+                    {product.preorderNote || "We'll ship it as soon as it's back in stock."}
+                  </p>
+                )}
                 {selectedSize && (
                   <div className="flex items-center justify-between mb-2 sm:mb-3 px-0.5">
                     <span className="text-xs sm:text-sm text-gray-600">
@@ -438,7 +480,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                   disabled={!selectedSize || addingToCart}
                   className={`relative w-full py-2.5 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ${
                     selectedSize && !addingToCart
-                      ? "bg-[#FD0002] text-white hover:bg-[#E00002] shadow-lg hover:shadow-xl active:scale-[0.98]"
+                      ? selectedIsPreorder
+                        ? "bg-amber-500 text-white hover:bg-amber-600 shadow-lg hover:shadow-xl active:scale-[0.98]"
+                        : "bg-[#FD0002] text-white hover:bg-[#E00002] shadow-lg hover:shadow-xl active:scale-[0.98]"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                   style={{ overflow: 'hidden' }}
@@ -459,12 +503,20 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-2">
-                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                      {selectedIsPreorder && selectedSize ? (
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                      ) : (
+                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                      )}
                       <span className="hidden xs:inline">
-                        {selectedSize ? `Add Size ${selectedSize} to Cart` : 'Select a Size'}
+                        {!selectedSize
+                          ? 'Select a Size'
+                          : selectedIsPreorder
+                          ? `Pre-order Size ${selectedSize}`
+                          : `Add Size ${selectedSize} to Cart`}
                       </span>
                       <span className="xs:hidden">
-                        {selectedSize ? `Add Size ${selectedSize}` : 'Select Size'}
+                        {!selectedSize ? 'Select Size' : selectedIsPreorder ? `Pre-order ${selectedSize}` : `Add Size ${selectedSize}`}
                       </span>
                     </span>
                   )}

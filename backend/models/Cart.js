@@ -22,7 +22,13 @@ const cartItemSchema = new mongoose.Schema({
         default: 1
     },
     subCategory: String,
-    stock: Number
+    stock: Number,
+    // Out-of-stock size ordered as a pre-order (stock is then the pre-order quantity limit)
+    isPreorder: {
+        type: Boolean,
+        default: false
+    },
+    preorderNote: String
 });
 
 const cartSchema = new mongoose.Schema({

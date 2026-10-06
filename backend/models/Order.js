@@ -42,8 +42,16 @@ const OrderSchema = new mongoose.Schema({
         price: { type: Number, required: true },
         quantity: { type: Number, required: true, min: 1 },
         size: { type: String, required: true },
-        color: String
+        color: String,
+        isPreorder: { type: Boolean, default: false },
+        preorderNote: String
     }],
+    // True when at least one item is a pre-order
+    isPreorder: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
     addressInfo: {
         name: { type: String, required: true },
         phone: { type: String, required: true },

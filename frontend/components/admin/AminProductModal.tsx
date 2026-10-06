@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   X, Package, Loader2, Plus, Trash2, Tag, Ruler, DollarSign, 
-  Box, BarChart3, Sparkles, AlertCircle, TrendingUp, Star, Hash, RefreshCw, Youtube, Store
+  Box, BarChart3, Sparkles, AlertCircle, TrendingUp, Star, Hash, RefreshCw, Youtube, Store, Clock
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import ProductDescription, { DescriptionFormatHint } from "../products/ProductDescription";
@@ -41,6 +41,8 @@ interface ProductFormData {
   sku: string;
   isResellerAvailable: boolean;
   resellerPrice: string;
+  isPreorderEnabled: boolean;
+  preorderNote: string;
 }
 
 interface ProductModalProps {
@@ -113,6 +115,8 @@ export default function AdminProductModal({
     sku: '',
     isResellerAvailable: false,
     resellerPrice: '',
+    isPreorderEnabled: false,
+    preorderNote: '',
   });
 
   const [newTag, setNewTag] = useState('');
@@ -173,6 +177,8 @@ export default function AdminProductModal({
         sku: product.sku || '',
         isResellerAvailable: product.isResellerAvailable || false,
         resellerPrice: product.resellerPrice?.toString() || '',
+        isPreorderEnabled: product.isPreorderEnabled || false,
+        preorderNote: product.preorderNote || '',
       });
     } else {
       setFormData({
@@ -201,6 +207,8 @@ export default function AdminProductModal({
         sku: '',
         isResellerAvailable: false,
         resellerPrice: '',
+        isPreorderEnabled: false,
+        preorderNote: '',
       });
     }
   }, [product, isOpen]);
@@ -349,6 +357,8 @@ useEffect(() => {
       sku: !formData.hasSizeVariants ? formData.sku : undefined,
       isResellerAvailable: formData.isResellerAvailable,
       resellerPrice: formData.resellerPrice ? parseFloat(formData.resellerPrice) : null,
+      isPreorderEnabled: formData.isPreorderEnabled,
+      preorderNote: formData.preorderNote.trim(),
     };
 
     console.log('Submitting product data:', submitData);
@@ -649,6 +659,46 @@ useEffect(() => {
                     💥 Hot Deals
                   </span>
                 </label>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-200">
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                  Pre-order
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  <label className="flex items-start gap-3 cursor-pointer group py-1">
+                    <input
+                      id="preorder-enabled"
+                      type="checkbox"
+                      checked={formData.isPreorderEnabled}
+                      onChange={(e) => setFormData({ ...formData, isPreorderEnabled: e.target.checked })}
+                      className="mt-0.5 w-5 h-5 text-amber-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-amber-500"
+                    />
+                    <span>
+                      <span className="block font-semibold text-gray-700 group-hover:text-amber-700 transition-colors">
+                        ⏳ Allow pre-order when out of stock
+                      </span>
+                      <span className="block text-xs text-gray-500 mt-0.5">
+                        Customers can order sizes with 0 stock (up to 10 each). Stock is not reduced for pre-orders.
+                      </span>
+                    </span>
+                  </label>
+                  <div>
+                    <label htmlFor="preorder-note" className="block text-sm font-bold text-gray-700 mb-2">
+                      Message for customers
+                    </label>
+                    <input
+                      id="preorder-note"
+                      type="text"
+                      maxLength={120}
+                      value={formData.preorderNote}
+                      onChange={(e) => setFormData({ ...formData, preorderNote: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:outline-none transition-colors text-gray-900 bg-white"
+                      placeholder="e.g. Ships in 10–15 days"
+                    />
+                  </div>
                 </div>
               </div>
 

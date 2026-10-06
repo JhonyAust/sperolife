@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { 
   Heart, ShoppingCart, Share2, Star, Package, Truck, 
   Shield, ArrowLeft, ChevronRight, Play, X, Check,
-  Zap, Eye, TrendingUp, Award, RefreshCw, Home, Sparkles, Plus, Minus
+  Zap, Eye, TrendingUp, Award, RefreshCw, Home, Sparkles, Plus, Minus, Clock
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,6 +12,7 @@ import { fetchProductBySlug, fetchRelatedProducts } from "@/lib/redux/slices/pro
 import { addToCart, addToCartDB } from "@/lib/redux/slices/cartSlice";
 import { toggleWishlistItem, addToWishlist, removeFromWishlist } from "@/lib/redux/slices/wishlistSlice";
 import ProductDescription from "@/components/products/ProductDescription";
+import { PREORDER_MAX_QUANTITY, isPreorderable } from "@/lib/preorder";
 
 export default function ProductDetailsPage() {
   const router = useRouter();
@@ -65,7 +66,8 @@ export default function ProductDetailsPage() {
   useEffect(() => {
     if (selectedProduct?.hasSizeVariants && selectedSize) {
       const selectedVariant = selectedProduct.sizeVariants?.find((v: any) => v.size === selectedSize);
-      const maxStock = selectedVariant?.stock || 0;
+      const variantStock = selectedVariant?.stock || 0;
+      const maxStock = isPreorderable(selectedProduct, variantStock) ? PREORDER_MAX_QUANTITY : variantStock;
       const cartItemId = `${selectedProduct._id}-${selectedSize}`;
       const cartItem = cartItems.find((item: any) => item._id === cartItemId);
       const alreadyInCart = cartItem?.quantity || 0;
@@ -118,7 +120,12 @@ export default function ProductDetailsPage() {
   // 🔥 NEW: Calculate available stock dynamically (total stock - already in cart)
   const availableStock = getAvailableStock();
   const cartQuantity = getCartQuantity();
-  const remainingStock = Math.max(0, availableStock - cartQuantity);
+  // Out-of-stock size (or single-size product) that the admin allows to pre-order
+  const sizeChosen = !product.hasSizeVariants || Boolean(selectedSize);
+  const isPreorderMode = sizeChosen && isPreorderable(product, availableStock);
+  const remainingStock = isPreorderMode
+    ? Math.max(0, PREORDER_MAX_QUANTITY - cartQuantity)
+    : Math.max(0, availableStock - cartQuantity);
 
   // 🔥 UPDATED: Use remainingStock instead of availableStock
   const isOutOfStock = remainingStock === 0;
@@ -151,12 +158,16 @@ const handleAddToCart = async () => {
   }
 
   if (remainingStock === 0) {
-    alert("This item is already in your cart with the maximum available quantity");
+    alert(isPreorderMode
+      ? `You can pre-order up to ${PREORDER_MAX_QUANTITY} of this item`
+      : "This item is already in your cart with the maximum available quantity");
     return;
   }
 
   if (quantity > remainingStock) {
-    alert(`Only ${remainingStock} item(s) available. You already have ${cartQuantity} in your cart.`);
+    alert(isPreorderMode
+      ? `You can pre-order ${remainingStock} more of this item`
+      : `Only ${remainingStock} item(s) available. You already have ${cartQuantity} in your cart.`);
     return;
   }
 
@@ -196,9 +207,9 @@ const handleAddToCart = async () => {
         size: selectedSize || 'One Size',
         quantity: quantity,
         subCategory: product.subCategory,
-        stock: product.hasSizeVariants 
-          ? product.sizeVariants?.find((v: any) => v.size === selectedSize)?.stock || 0
-          : product.stock
+        stock: isPreorderMode ? PREORDER_MAX_QUANTITY : availableStock,
+        isPreorder: isPreorderMode,
+        preorderNote: isPreorderMode ? product.preorderNote || '' : '',
       };
 
       dispatch(addToCart(cartItem));
@@ -223,12 +234,16 @@ const handleBuyNow = async () => {
   }
 
   if (remainingStock === 0) {
-    alert("This item is already in your cart with the maximum available quantity");
+    alert(isPreorderMode
+      ? `You can pre-order up to ${PREORDER_MAX_QUANTITY} of this item`
+      : "This item is already in your cart with the maximum available quantity");
     return;
   }
 
   if (quantity > remainingStock) {
-    alert(`Only ${remainingStock} item(s) available. You already have ${cartQuantity} in your cart.`);
+    alert(isPreorderMode
+      ? `You can pre-order ${remainingStock} more of this item`
+      : `Only ${remainingStock} item(s) available. You already have ${cartQuantity} in your cart.`);
     return;
   }
 
@@ -258,9 +273,9 @@ const handleBuyNow = async () => {
         size: selectedSize || 'One Size',
         quantity: quantity,
         subCategory: product.subCategory,
-        stock: product.hasSizeVariants 
-          ? product.sizeVariants?.find((v: any) => v.size === selectedSize)?.stock || 0
-          : product.stock
+        stock: isPreorderMode ? PREORDER_MAX_QUANTITY : availableStock,
+        isPreorder: isPreorderMode,
+        preorderNote: isPreorderMode ? product.preorderNote || '' : '',
       };
 
       dispatch(addToCart(cartItem));
@@ -478,14 +493,20 @@ const handleBuyNow = async () => {
               <div className="space-y-2 sm:space-y-3">
                 <h3 className="font-semibold text-xs sm:text-sm text-gray-900">Select Size:</h3>
                 <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                  {product.sizeVariants.map((variant: any) => (
+                  {product.sizeVariants.map((variant: any) => {
+                    const sizePreorder = isPreorderable(product, variant.stock);
+                    return (
                     <button
                       key={variant.size}
                       onClick={() => setSelectedSize(variant.size)}
-                      disabled={variant.stock === 0}
+                      disabled={variant.stock === 0 && !sizePreorder}
                       className={`relative p-2 sm:p-2.5 rounded-lg sm:rounded-xl font-semibold text-center transition-all duration-300 border-2 ${
                         selectedSize === variant.size
-                          ? 'border-[#FD0002] bg-[#FD0002] text-white shadow-lg scale-105'
+                          ? sizePreorder
+                            ? 'border-amber-500 bg-amber-500 text-white shadow-lg scale-105'
+                            : 'border-[#FD0002] bg-[#FD0002] text-white shadow-lg scale-105'
+                          : sizePreorder
+                          ? 'border-dashed border-amber-400 bg-amber-50 text-amber-900 hover:border-amber-500 hover:scale-105'
                           : variant.stock === 0
                           ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
                           : 'border-gray-300 bg-white text-gray-900 hover:border-[#FD0002] hover:shadow-md hover:scale-105'
@@ -499,13 +520,21 @@ const handleBuyNow = async () => {
                           {variant.stock} left
                         </div>
                       )}
-                      {variant.stock === 0 && (
+                      {sizePreorder && (
+                        <div className={`text-[9px] sm:text-[10px] mt-0.5 font-bold uppercase ${
+                          selectedSize === variant.size ? 'text-white/90' : 'text-amber-700'
+                        }`}>
+                          Pre-order
+                        </div>
+                      )}
+                      {variant.stock === 0 && !sizePreorder && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-full h-0.5 bg-gray-300 rotate-[-45deg]" />
                         </div>
                       )}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -559,18 +588,22 @@ const handleBuyNow = async () => {
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || addingToCart || (product.hasSizeVariants && !selectedSize)}
-                className="w-full relative bg-gradient-to-r from-[#FD0002] via-red-600 to-[#FD0002] bg-[length:200%_100%] text-white py-2 sm:py-2.5 px-6 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[position:100%_0] transition-all duration-500 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:shadow-red-200 flex items-center justify-center gap-2 overflow-hidden group active:scale-95"
+                className={`w-full relative bg-gradient-to-r ${isPreorderMode ? "from-amber-500 via-amber-600 to-amber-500" : "from-[#FD0002] via-red-600 to-[#FD0002]"} bg-[length:200%_100%] text-white py-2 sm:py-2.5 px-6 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[position:100%_0] transition-all duration-500 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:shadow-red-200 flex items-center justify-center gap-2 overflow-hidden group active:scale-95`}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg] animate-shimmer-complete" />
                 {addingToCart ? (
                   <>
                     <Check className="w-4 h-4 animate-bounce relative z-10" />
-                    <span className="relative z-10 font-bold">Added to Cart!</span>
+                    <span className="relative z-10 font-bold">{isPreorderMode ? "Pre-order added!" : "Added to Cart!"}</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-4 h-4 relative z-10 group-hover:rotate-12 transition-transform" />
-                    <span className="relative z-10 font-bold">Add to Cart</span>
+                    {isPreorderMode ? (
+                      <Clock className="w-4 h-4 relative z-10" />
+                    ) : (
+                      <ShoppingCart className="w-4 h-4 relative z-10 group-hover:rotate-12 transition-transform" />
+                    )}
+                    <span className="relative z-10 font-bold">{isPreorderMode ? "Pre-order" : "Add to Cart"}</span>
                   </>
                 )}
               </button>
@@ -590,7 +623,7 @@ const handleBuyNow = async () => {
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-white relative z-10 group-hover:scale-110 transition-transform" />
-                    <span className="relative z-10 font-bold">Buy Now</span>
+                    <span className="relative z-10 font-bold">{isPreorderMode ? "Pre-order Now" : "Buy Now"}</span>
                   </>
                 )}
               </button>
@@ -613,6 +646,20 @@ const handleBuyNow = async () => {
             </div>
 
             {/* 🔥 UPDATED: Stock Status with cart-aware logic */}
+            {isPreorderMode ? (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-amber-50 border-2 border-amber-200">
+                <div className="flex items-start gap-2">
+                  <Clock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-[11px] sm:text-xs text-amber-900">
+                    <p className="font-bold">Out of stock · Available for pre-order</p>
+                    <p className="mt-0.5">
+                      {product.preorderNote || "We'll ship your order as soon as it's back in stock."}
+                    </p>
+                    {cartQuantity > 0 && <p className="mt-0.5 font-semibold">{cartQuantity} already in your cart</p>}
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div className={`p-2 sm:p-2.5 rounded-lg animate-pulse-slow ${
               remainingStock > 10 ? 'bg-green-50 border-2 border-green-200' :
               remainingStock > 0 ? 'bg-yellow-50 border-2 border-yellow-200' :
@@ -641,6 +688,7 @@ const handleBuyNow = async () => {
                 </span>
               </div>
             </div>
+            )}
           </div>
         </div>
 

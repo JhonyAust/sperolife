@@ -101,6 +101,8 @@ exports.createProduct = async(req, res) => {
             youtubeLink,
             isResellerAvailable,
             resellerPrice,
+            isPreorderEnabled,
+            preorderNote,
         } = req.body;
 
         // Validation
@@ -172,6 +174,8 @@ exports.createProduct = async(req, res) => {
             youtubeLink: youtubeLink || undefined,
             isResellerAvailable: isResellerAvailable === true,
             resellerPrice: parseResellerPrice(resellerPrice),
+            isPreorderEnabled: isPreorderEnabled === true,
+            preorderNote: typeof preorderNote === 'string' ? preorderNote.trim().slice(0, 120) : '',
         });
 
         res.status(201).json({
@@ -456,6 +460,8 @@ exports.updateProduct = async(req, res) => {
             youtubeLink,
             isResellerAvailable,
             resellerPrice,
+            isPreorderEnabled,
+            preorderNote,
         } = req.body;
 
         const resellerError = validateResellerFields(isResellerAvailable, resellerPrice, product);
@@ -510,6 +516,8 @@ exports.updateProduct = async(req, res) => {
         if (youtubeLink !== undefined) product.youtubeLink = youtubeLink;
         if (typeof isResellerAvailable === 'boolean') product.isResellerAvailable = isResellerAvailable;
         if (resellerPrice !== undefined) product.resellerPrice = parseResellerPrice(resellerPrice);
+        if (typeof isPreorderEnabled === 'boolean') product.isPreorderEnabled = isPreorderEnabled;
+        if (typeof preorderNote === 'string') product.preorderNote = preorderNote.trim().slice(0, 120);
 
         await product.save();
 
