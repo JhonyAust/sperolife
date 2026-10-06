@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "@/components/products/ProductCard";
@@ -14,6 +14,7 @@ import {
   getLogoKey,
   buildBrandLogoMap,
 } from "@/lib/brands";
+import { isPreorderProduct } from "@/lib/preorder";
 import { getActiveBanners } from "@/lib/redux/slices/bannerSlice";
 import { fetchProducts } from "@/lib/redux/slices/productSlice";
 import { toast } from "react-hot-toast";
@@ -33,6 +34,7 @@ const isAccessory = (product) =>
 
 const MOBILE_SECTION_LIMIT = 5;
 const ACCESSORIES_KEY = "accessories";
+const PREORDER_KEY = "preorder";
 
 // DOM id for a homepage section, e.g. "new balance" -> "section-new-balance"
 const sectionId = (key) => `section-${String(key).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}`;
@@ -136,6 +138,12 @@ export default function ModernHomePage() {
     [allProducts]
   );
 
+  // Out-of-stock products the admin opened for pre-order (never shirts on the homepage)
+  const preorderProducts = React.useMemo(
+    () => sortByNewest(uniqueById(allProducts.filter((p) => isPreorderProduct(p) && !isShirt(p)))),
+    [allProducts]
+  );
+
   // Brand tabs: one per sneaker brand section, then Accessories
   const tabs = React.useMemo(() => {
     const brandTabs = sneakerBrandSections.map((section) => ({
@@ -144,10 +152,12 @@ export default function ModernHomePage() {
       logoKey: getLogoKey(section.key),
       logoUrl: brandLogos[section.key] || null,
     }));
-    return accessoryProducts.length > 0
-      ? [...brandTabs, { key: ACCESSORIES_KEY, label: "Accessories", logoKey: null }]
-      : brandTabs;
-  }, [sneakerBrandSections, accessoryProducts.length, brandLogos]);
+    return [
+      ...brandTabs,
+      ...(preorderProducts.length > 0 ? [{ key: PREORDER_KEY, label: "Pre-order", logoKey: null }] : []),
+      ...(accessoryProducts.length > 0 ? [{ key: ACCESSORIES_KEY, label: "Accessories", logoKey: null }] : []),
+    ];
+  }, [sneakerBrandSections, accessoryProducts.length, preorderProducts.length, brandLogos]);
 
   const scrollToSection = (key) => {
     setActiveSection(key);
@@ -482,12 +492,43 @@ export default function ModernHomePage() {
         </section>
       ))}
 
+      {/* Pre-order - out-of-stock products open for pre-order */}
+      {preorderProducts.length > 0 && (
+        <section
+          id={sectionId(PREORDER_KEY)}
+          data-section-key={PREORDER_KEY}
+          className={`py-4 lg:py-6 ${sneakerBrandSections.length % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          style={{ scrollMarginTop: stickyOffset }}
+        >
+          <div className="md:hidden container mx-auto px-4">
+            <SubCategoryRow
+              title="Pre-order"
+              icon={<Clock className="w-6 h-6 text-amber-600" />}
+              products={preorderProducts.slice(0, MOBILE_SECTION_LIMIT)}
+              loading={false}
+              onSeeAll={() => router.push("/products?preorder=true")}
+            />
+          </div>
+          <div className="hidden md:block container mx-auto px-4 md:px-8 lg:px-16">
+            <SectionHeader
+              icon={<Clock className="text-amber-600" />}
+              badge="Order now, ships when restocked"
+              title="Pre-order"
+              gradient="from-amber-700 via-amber-600 to-orange-500"
+              accentColor="amber"
+              onViewAll={() => router.push("/products?preorder=true")}
+            />
+            <HorizontalScroll products={preorderProducts.slice(0, SECTION_PRODUCT_LIMIT)} loading={false} />
+          </div>
+        </section>
+      )}
+
       {/* Accessories - bottom of homepage */}
       {accessoryProducts.length > 0 && (
         <section
           id={sectionId(ACCESSORIES_KEY)}
           data-section-key={ACCESSORIES_KEY}
-          className={`py-4 lg:py-6 ${sneakerBrandSections.length % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          className={`py-4 lg:py-6 ${(sneakerBrandSections.length + (preorderProducts.length > 0 ? 1 : 0)) % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
           style={{ scrollMarginTop: stickyOffset }}
         >
           <div className="md:hidden container mx-auto px-4">
@@ -513,7 +554,7 @@ export default function ModernHomePage() {
         </section>
       )}
 
-      {!productsLoading && allProducts.length > 0 && sneakerBrandSections.length === 0 && accessoryProducts.length === 0 && (
+      {!productsLoading && allProducts.length > 0 && sneakerBrandSections.length === 0 && accessoryProducts.length === 0 && preorderProducts.length === 0 && (
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4 text-center">
             <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
@@ -662,6 +703,9 @@ function BrandTab({ tab, active, onClick }) {
 }
 
 function TabIcon({ tab, active }) {
+  if (tab.key === PREORDER_KEY) {
+    return <Clock className={`w-5 h-5 ${active ? "text-white" : "text-amber-600"}`} />;
+  }
   if (tab.key === ACCESSORIES_KEY) {
     return <Watch className={`w-5 h-5 ${active ? "text-white" : "text-amber-600"}`} />;
   }

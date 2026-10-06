@@ -529,6 +529,11 @@ export default function OrderDetailsPage() {
                           Color: {item.color}
                         </span>
                       )}
+                      {item.isPreorder && (
+                        <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-lg">
+                          ⏳ Pre-order{item.preorderNote ? ` · ${item.preorderNote}` : ''}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Qty: {item.quantity}</span>

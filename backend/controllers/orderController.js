@@ -2,7 +2,8 @@ const crypto = require('crypto');
 const Order = require('../models/Order');
 const Notification = require('../models/Notification');
 const Product = require('../models/Product');
-const Coupon = require('../models/Coupon'); // ✅ Add Coupon import
+const Coupon = require('../models/Coupon');
+const { PREORDER_MAX_QUANTITY, getSizeStock, isPreorderable } = require('../helpers/preorder'); // ✅ Add Coupon import
 const { broadcastNotification, broadcastUnreadCount } = require('../routes/notificationSSE');
 
 const hashToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
@@ -58,7 +59,9 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    // Validate stock for each item
+    // Validate stock for each item. The server decides which lines are pre-orders:
+    // a line is a pre-order only if that size is out of stock and the product allows it.
+    const preorderInfo = []; // per cartItems index: { isPreorder, preorderNote }
     for (const item of cartItems) {
       const product = await Product.findById(item.productId);
       
@@ -69,29 +72,34 @@ exports.createOrder = async (req, res) => {
         });
       }
 
-      let availableStock = 0;
-      
-      // Check stock based on product type
-      if (product.hasSizeVariants && product.sizeVariants && product.sizeVariants.length > 0) {
-        const sizeOption = product.sizeVariants.find(s => s.size === item.size);
-        if (!sizeOption) {
-          return res.status(400).json({
-            success: false,
-            message: `Size ${item.size} not available for ${item.title}`
-          });
-        }
-        availableStock = sizeOption.stock || 0;
-      } else {
-        // Single size product or no size variants
-        availableStock = product.stock || 0;
-      }
-
-      if (availableStock < item.quantity) {
+      const availableStock = getSizeStock(product, item.size);
+      if (availableStock === null) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient stock for ${item.title}. Only ${availableStock} available`
+          message: `Size ${item.size} not available for ${item.title}`
         });
       }
+
+      if (availableStock >= item.quantity) {
+        preorderInfo.push({ isPreorder: false, preorderNote: '' });
+        continue;
+      }
+
+      if (isPreorderable(product, availableStock)) {
+        if (item.quantity > PREORDER_MAX_QUANTITY) {
+          return res.status(400).json({
+            success: false,
+            message: `You can pre-order up to ${PREORDER_MAX_QUANTITY} of ${item.title}`
+          });
+        }
+        preorderInfo.push({ isPreorder: true, preorderNote: product.preorderNote || '' });
+        continue;
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient stock for ${item.title}. Only ${availableStock} available`
+      });
     }
 
     // ✅ Validate coupon if provided (double-check on backend)
@@ -122,7 +130,7 @@ exports.createOrder = async (req, res) => {
     }
 
     // Transform cartItems to match Order schema
-    const transformedCartItems = cartItems.map(item => ({
+    const transformedCartItems = cartItems.map((item, index) => ({
       product: item.productId, // This is the reference to Product model
       productId: item.productId,
       title: item.title,
@@ -130,7 +138,9 @@ exports.createOrder = async (req, res) => {
       price: item.price,
       quantity: item.quantity,
       size: item.size,
-      color: item.color || ''
+      color: item.color || '',
+      isPreorder: preorderInfo[index].isPreorder,
+      preorderNote: preorderInfo[index].preorderNote
     }));
 
     console.log("🔄 Creating order with transformed items...");
@@ -147,7 +157,8 @@ exports.createOrder = async (req, res) => {
       couponCode: couponCode || null,
       discountAmount: discountAmount || 0,
       orderStatus: 'pending',
-      paymentStatus: 'pending'
+      paymentStatus: 'pending',
+      isPreorder: preorderInfo.some((p) => p.isPreorder)
     });
 
     // Guests get a one-time token so they can view their order confirmation
@@ -173,8 +184,9 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // Update product stock
-    for (const item of cartItems) {
+    // Update product stock (pre-order lines have no stock to take)
+    for (const [index, item] of cartItems.entries()) {
+      if (preorderInfo[index].isPreorder) continue;
       const product = await Product.findById(item.productId);
       
       if (!product) continue; // Skip if product not found

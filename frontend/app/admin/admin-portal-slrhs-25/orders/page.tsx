@@ -418,6 +418,9 @@ function MobileOrderCard({ order, onAction, router }: any) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <div className="font-bold text-purple-600 text-sm mb-1">#{order.orderNumber}</div>
+          {order.isPreorder && (
+            <span className="inline-block mb-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800">⏳ Pre-order</span>
+          )}
           <div className="text-xs text-gray-500 mb-2">{order.cartItems.length} items</div>
           <button
             onClick={() => router.push(`/admin/admin-portal-slrhs-25/orders/${order.orderNumber}`)}
@@ -643,9 +646,19 @@ export default function AdminOrdersPage() {
             <option value="paid">Paid</option>
             <option value="failed">Failed</option>
           </select>
+
+          {/* Pre-order Filter */}
+          <select
+            value={filters.preorder}
+            onChange={(e) => handleFilterChange('preorder', e.target.value)}
+            className="px-4 py-2 sm:py-2.5 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 font-semibold text-sm text-black"
+          >
+            <option value="all">All Orders</option>
+            <option value="true">Pre-orders only</option>
+          </select>
         </div>
 
-        {(filters.status !== 'all' || filters.paymentStatus !== 'all' || filters.search) && (
+        {(filters.status !== 'all' || filters.paymentStatus !== 'all' || filters.preorder !== 'all' || filters.search) && (
           <button
             onClick={() => {
               dispatch(resetFilters());
@@ -707,6 +720,9 @@ export default function AdminOrdersPage() {
                     >
                       <td className="px-6 py-4">
                         <div className="font-bold text-purple-600">#{order.orderNumber}</div>
+                        {order.isPreorder && (
+                          <span className="inline-block mt-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800">⏳ Pre-order</span>
+                        )}
                         <div className="text-xs text-gray-500 mb-2">{order.cartItems.length} items</div>
                         <button
                           onClick={() => router.push(`/admin/admin-portal-slrhs-25/orders/${order.orderNumber}`)}

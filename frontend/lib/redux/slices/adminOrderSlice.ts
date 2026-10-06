@@ -4,6 +4,8 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import api from "@/lib/api";
 
 interface OrderItem {
+  isPreorder?: boolean;
+  preorderNote?: string;
   product: string;
   productId: string;
   title: string;
@@ -34,6 +36,7 @@ interface StatusHistory {
 }
 
 interface Order {
+  isPreorder?: boolean;
   _id: string;
   userId?: {
     _id: string;
@@ -99,6 +102,7 @@ interface AdminOrderState {
     status: string;
     paymentStatus: string;
     paymentMethod: string;
+    preorder: string;
     search: string;
     startDate: string;
     endDate: string;
@@ -124,6 +128,7 @@ const initialState: AdminOrderState = {
     status: 'all',
     paymentStatus: 'all',
     paymentMethod: 'all',
+    preorder: 'all',
     search: '',
     startDate: '',
     endDate: '',
@@ -143,6 +148,7 @@ export const fetchAllOrders = createAsyncThunk(
     status?: string;
     paymentStatus?: string;
     paymentMethod?: string;
+    preorder?: string;
     page?: number;
     limit?: number;
     search?: string;

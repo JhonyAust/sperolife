@@ -18,6 +18,8 @@ export interface CartItem {
   quantity: number;
   stock: number;
   subCategory?: string;
+  isPreorder?: boolean;
+  preorderNote?: string;
 }
 
 export interface Product {

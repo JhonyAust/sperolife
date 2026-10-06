@@ -224,6 +224,7 @@ export default function ProductContent() {
     const category = searchParams.get('category');
     const subCategory = searchParams.get('subCategory');
     const brand = searchParams.get('brand');
+    const preorder = searchParams.get('preorder');
     const search = searchParams.get('search');
     const featured = searchParams.get('featured');
     const newArrival = searchParams.get('newArrival');
@@ -271,6 +272,10 @@ export default function ProductContent() {
 
     if (brand?.trim()) {
       params.brand = brand.trim();
+    }
+
+    if (preorder === 'true') {
+      params.preorder = 'true';
     }
     
     // Quick filters (except onSale - handled client-side)
@@ -477,7 +482,7 @@ export default function ProductContent() {
           </div>
 
           {/* Active Filters */}
-          {(activeFiltersCount > 0 || searchQuery || searchParams.get('brand')) && (
+          {(activeFiltersCount > 0 || searchQuery || searchParams.get('brand') || searchParams.get('preorder') === 'true') && (
             <div className="mt-4 flex items-center gap-2 flex-wrap">
               <span className="text-sm font-semibold text-gray-600">Active:</span>
               {searchQuery && (
@@ -492,6 +497,17 @@ export default function ProductContent() {
                     setSelectedCategory(""); 
                     setSelectedSubCategory(""); 
                     updateURL({ category: '', subCategory: '' });
+                  }} 
+                />
+              )}
+              {searchParams.get('preorder') === 'true' && (
+                <FilterTag 
+                  label="Pre-order" 
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams);
+                    params.delete('preorder');
+                    const queryString = params.toString();
+                    router.replace(queryString ? `/products?${queryString}` : '/products', { scroll: false });
                   }} 
                 />
               )}

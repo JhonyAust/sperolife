@@ -10,6 +10,7 @@ import {
   removeFromCartDB 
 } from "@/lib/redux/slices/cartSlice";
 import { useState } from "react";
+import PreorderBadge from "@/components/products/PreorderBadge";
 
 interface CartItemContentProps {
   cartItem: {
@@ -22,6 +23,9 @@ interface CartItemContentProps {
     quantity: number;
     subCategory: string;
     stock: number;
+    salePrice?: number | null;
+    isPreorder?: boolean;
+    preorderNote?: string;
   };
 }
 
@@ -44,7 +48,9 @@ export default function CartItemContent({ cartItem }: CartItemContentProps) {
 
     // Check stock limit for increment
     if (type === "plus" && newQuantity > cartItem.stock) {
-      alert(`Only ${cartItem.stock} items available in stock`);
+      alert(cartItem.isPreorder
+        ? `You can pre-order up to ${cartItem.stock} of this item`
+        : `Only ${cartItem.stock} items available in stock`);
       return;
     }
 
@@ -110,6 +116,7 @@ export default function CartItemContent({ cartItem }: CartItemContentProps) {
               {cartItem.name}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">Size: {cartItem.size}</p>
+            {cartItem.isPreorder && <PreorderBadge note={cartItem.preorderNote} className="mt-1" />}
           </div>
           <button
             onClick={handleRemove}
@@ -150,7 +157,7 @@ export default function CartItemContent({ cartItem }: CartItemContentProps) {
             </Button>
           </div>
           
-          {cartItem.subCategory !== "Sneakers" && cartItem.stock < 10 &&  (
+          {!cartItem.isPreorder && cartItem.subCategory !== "Sneakers" && cartItem.stock < 10 &&  (
             <span className="text-xs text-orange-600 font-medium">
               Only {cartItem.stock} left
             </span>

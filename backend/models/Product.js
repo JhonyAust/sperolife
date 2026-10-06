@@ -161,6 +161,18 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Pre-order: when enabled, sizes that are out of stock can still be ordered
+    isPreorderEnabled: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    preorderNote: {
+      type: String,
+      trim: true,
+      maxlength: [120, 'Pre-order note cannot exceed 120 characters'],
+      default: '',
+    },
     // Reseller program: admin controls visibility and price for resellers
     isResellerAvailable: {
       type: Boolean,

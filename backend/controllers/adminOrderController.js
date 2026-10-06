@@ -53,6 +53,11 @@ exports.getAllOrders = async (req, res) => {
       query.paymentMethod = paymentMethod;
     }
 
+    // Pre-order filter
+    if (req.query.preorder === 'true') {
+      query.isPreorder = true;
+    }
+
     // Order source filter (orders created before this field existed count as website orders)
     if (orderSource === 'reseller') {
       query.orderSource = 'reseller';
@@ -357,8 +362,9 @@ exports.cancelOrder = async (req, res) => {
       });
     }
 
-    // Restore product stock
+    // Restore product stock (pre-order lines never took stock)
     for (const item of order.cartItems) {
+      if (item.isPreorder) continue;
       const product = await Product.findById(item.product);
       
       if (product) {

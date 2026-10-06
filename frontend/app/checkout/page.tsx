@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import PreorderBadge from "@/components/products/PreorderBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
@@ -954,6 +955,12 @@ const shippingCharge = hasSneakers
                 </div>
 
                 <div className="p-4 sm:p-6">
+                  {cartItems?.some((item) => item.isPreorder) && (
+                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      <span className="font-bold">Your order includes pre-order items.</span> They ship as soon as they're
+                      back in stock; everything else ships as usual.
+                    </div>
+                  )}
                   {cartItems && cartItems.length > 0 ? (
                     <div className="space-y-3 sm:space-y-4 max-h-[350px] sm:max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                       {cartItems.map((item, index) => (
@@ -992,6 +999,7 @@ const shippingCharge = hasSneakers
                               </motion.button>
                             </div>
                             <p className="text-xs text-gray-500 mb-2">Size: {item.size}</p>
+                            {item.isPreorder && <PreorderBadge note={item.preorderNote} className="mb-2" />}
                             
                             {/* Quantity Controls */}
                             <div className="flex items-center justify-between">

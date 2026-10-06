@@ -130,6 +130,7 @@ export const fetchProducts = createAsyncThunk(
       isNewArrival?: boolean | string;
       isBestSeller?: boolean | string;
       isHotDeals?: boolean | string;
+      preorder?: boolean | string;
     } = {},
     { rejectWithValue }
   ) => {
@@ -150,6 +151,7 @@ export const fetchProducts = createAsyncThunk(
       if (params.isNewArrival) queryParams.append("isNewArrival", "true");
       if (params.isBestSeller) queryParams.append("isBestSeller", "true");
       if (params.isHotDeals) queryParams.append("isHotDeals", "true");
+      if (params.preorder) queryParams.append("preorder", "true");
 
       const url = `/products?${queryParams.toString()}`;
       console.log('🔗 Fetching products from:', url);

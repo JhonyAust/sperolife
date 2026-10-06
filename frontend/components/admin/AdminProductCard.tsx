@@ -21,6 +21,7 @@ interface Product {
   category: string;
   brand?: string;
   isResellerAvailable?: boolean;
+  isPreorderEnabled?: boolean;
   resellerPrice?: number | null;
   images: string[];
   stock: number;
@@ -186,6 +187,11 @@ export default function AdminProductCard({ product, onEdit, onDelete, onToggleSt
           {product.brand && (
             <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
               {product.brand}
+            </span>
+          )}
+          {product.isPreorderEnabled && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
+              ⏳ Pre-order
             </span>
           )}
           {product.isResellerAvailable && product.resellerPrice > 0 && (

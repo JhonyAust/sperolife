@@ -2,6 +2,8 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import api from "@/lib/api";
 
 interface OrderItem {
+  isPreorder?: boolean;
+  preorderNote?: string;
   product: string;
   productId: string;
   title: string;
@@ -29,6 +31,7 @@ interface StatusHistory {
 }
 
 interface Order {
+  isPreorder?: boolean;
   _id: string;
   userId?: string;
   orderNumber: string;

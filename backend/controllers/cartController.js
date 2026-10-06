@@ -1,5 +1,6 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const { PREORDER_MAX_QUANTITY, isPreorderable } = require('../helpers/preorder');
 
 // @desc    Get user cart
 // @route   GET /api/cart/:userId
@@ -89,11 +90,18 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    if (sizeOption.stock < quantity) {
-      console.error("❌ Insufficient stock:", { available: sizeOption.stock, requested: quantity });
+    // Out-of-stock sizes can be pre-ordered when the admin enabled it
+    const isPreorder = isPreorderable(product, sizeOption.stock);
+    const maxQuantity = isPreorder ? PREORDER_MAX_QUANTITY : sizeOption.stock;
+    const preorderNote = isPreorder ? product.preorderNote || '' : '';
+
+    if (maxQuantity < quantity) {
+      console.error("❌ Insufficient stock:", { available: maxQuantity, requested: quantity, isPreorder });
       return res.status(400).json({
         success: false,
-        message: `Only ${sizeOption.stock} items available in stock`
+        message: isPreorder
+          ? `You can pre-order up to ${PREORDER_MAX_QUANTITY} of this item`
+          : `Only ${sizeOption.stock} items available in stock`
       });
     }
 
@@ -123,19 +131,23 @@ exports.addToCart = async (req, res) => {
         new: newQuantity 
       });
       
-      if (sizeOption.stock < newQuantity) {
+      if (maxQuantity < newQuantity) {
         console.error("❌ Insufficient stock for update:", { 
-          available: sizeOption.stock, 
+          available: maxQuantity, 
           requested: newQuantity 
         });
         return res.status(400).json({
           success: false,
-          message: `Only ${sizeOption.stock} items available. You already have ${cart.items[existingItemIndex].quantity} in your cart.`
+          message: isPreorder
+            ? `You can pre-order up to ${PREORDER_MAX_QUANTITY} of this item. You already have ${cart.items[existingItemIndex].quantity} in your cart.`
+            : `Only ${sizeOption.stock} items available. You already have ${cart.items[existingItemIndex].quantity} in your cart.`
         });
       }
 
       cart.items[existingItemIndex].quantity = newQuantity;
-      cart.items[existingItemIndex].stock = sizeOption.stock;
+      cart.items[existingItemIndex].stock = maxQuantity;
+      cart.items[existingItemIndex].isPreorder = isPreorder;
+      cart.items[existingItemIndex].preorderNote = preorderNote;
       // ✅ Update pricing in case it changed
       cart.items[existingItemIndex].price = itemPrice;
       cart.items[existingItemIndex].salePrice = itemSalePrice;
@@ -153,7 +165,9 @@ exports.addToCart = async (req, res) => {
         color: color || '',
         quantity,
         subCategory,
-        stock: sizeOption.stock
+        stock: maxQuantity,
+        isPreorder,
+        preorderNote
       });
     }
 
@@ -235,15 +249,29 @@ exports.updateCartItem = async (req, res) => {
       itemSalePrice = product.salePrice || null;
     }
     
-    if (sizeOption.stock < quantity) {
+    if (!sizeOption) {
       return res.status(400).json({
         success: false,
-        message: `Only ${sizeOption.stock} items available in stock`
+        message: `Size ${item.size} is no longer available for this product`
+      });
+    }
+
+    const isPreorder = isPreorderable(product, sizeOption.stock);
+    const maxQuantity = isPreorder ? PREORDER_MAX_QUANTITY : sizeOption.stock;
+
+    if (maxQuantity < quantity) {
+      return res.status(400).json({
+        success: false,
+        message: isPreorder
+          ? `You can pre-order up to ${PREORDER_MAX_QUANTITY} of this item`
+          : `Only ${sizeOption.stock} items available in stock`
       });
     }
 
     item.quantity = quantity;
-    item.stock = sizeOption.stock;
+    item.stock = maxQuantity;
+    item.isPreorder = isPreorder;
+    item.preorderNote = isPreorder ? product.preorderNote || '' : '';
     // ✅ Update pricing
     item.price = itemPrice;
     item.salePrice = itemSalePrice;
