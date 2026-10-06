@@ -6,35 +6,19 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "@/components/products/ProductCard";
 import BrandLogo from "@/components/products/BrandLogo";
+import api from "@/lib/api";
+import {
+  FEATURED_SNEAKER_BRANDS,
+  UNBRANDED_KEY,
+  getBrandKey,
+  getLogoKey,
+  buildBrandLogoMap,
+} from "@/lib/brands";
 import { getActiveBanners } from "@/lib/redux/slices/bannerSlice";
 import { fetchProducts } from "@/lib/redux/slices/productSlice";
 import { toast } from "react-hot-toast";
 
-// Homepage brand sections are shown in this order; any other sneaker brand follows alphabetically.
-// `aliases` are normalized spellings (see normalizeBrand) that belong to the same brand.
-const FEATURED_SNEAKER_BRANDS = [
-  { key: "nike", label: "Nike", aliases: ["nike"] },
-  { key: "adidas", label: "Adidas", aliases: ["adidas"] },
-  { key: "vans", label: "Vans", aliases: ["vans"] },
-  { key: "lv", label: "LV", aliases: ["lv", "louis vuitton", "louisvuitton"] },
-];
-const UNBRANDED_KEY = "__unbranded__";
 const SECTION_PRODUCT_LIMIT = 10;
-
-// "  Louis-Vuitton " -> "louis vuitton", "L.V." -> "lv"
-const normalizeBrand = (brand) =>
-  (brand || "")
-    .toLowerCase()
-    .replace(/[.'’]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-
-const getBrandKey = (brand) => {
-  const normalized = normalizeBrand(brand);
-  if (!normalized) return UNBRANDED_KEY;
-  const featured = FEATURED_SNEAKER_BRANDS.find((b) => b.aliases.includes(normalized));
-  return featured ? featured.key : normalized;
-};
 
 const isShirt = (product) => (product.subCategory || "").toLowerCase().includes("shirt");
 
@@ -110,6 +94,7 @@ export default function ModernHomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeSection, setActiveSection] = useState(null);
   const [headerHeight, setHeaderHeight] = useState(64);
+  const [brandLogos, setBrandLogos] = useState({}); // admin-uploaded logos by brand key
   const tabBarRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false); // ADD THIS
@@ -156,17 +141,26 @@ export default function ModernHomePage() {
     const brandTabs = sneakerBrandSections.map((section) => ({
       key: section.key,
       label: section.label,
-      logoKey: section.key === UNBRANDED_KEY ? null : String(section.key).replace(/\s+/g, ""),
+      logoKey: getLogoKey(section.key),
+      logoUrl: brandLogos[section.key] || null,
     }));
     return accessoryProducts.length > 0
       ? [...brandTabs, { key: ACCESSORIES_KEY, label: "Accessories", logoKey: null }]
       : brandTabs;
-  }, [sneakerBrandSections, accessoryProducts.length]);
+  }, [sneakerBrandSections, accessoryProducts.length, brandLogos]);
 
   const scrollToSection = (key) => {
     setActiveSection(key);
     document.getElementById(sectionId(key))?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  // Admin-uploaded brand logos replace the built-in ones
+  useEffect(() => {
+    api
+      .get("/brands")
+      .then(({ data }) => setBrandLogos(buildBrandLogoMap(data?.brands)))
+      .catch(() => {}); // built-in logos are used if this fails
+  }, []);
 
   // The site header is sticky and changes height on scroll; keep the brand bar right below it
   useEffect(() => {
@@ -466,7 +460,7 @@ export default function ModernHomePage() {
           <div className="md:hidden container mx-auto px-4">
             <SubCategoryRow
               title={section.label}
-              icon={<SectionLogo logoKey={section.key === UNBRANDED_KEY ? null : String(section.key).replace(/\s+/g, "")} label={section.label} />}
+              icon={<SectionLogo logoKey={getLogoKey(section.key)} logoUrl={brandLogos[section.key]} label={section.label} />}
               products={section.products.slice(0, MOBILE_SECTION_LIMIT)}
               loading={false}
               onSeeAll={() => router.push(brandViewAllUrl(section))}
@@ -476,7 +470,7 @@ export default function ModernHomePage() {
           {/* Tablet / Desktop */}
           <div className="hidden md:block container mx-auto px-4 md:px-8 lg:px-16">
             <SectionHeader
-              icon={<SectionLogo logoKey={section.key === UNBRANDED_KEY ? null : String(section.key).replace(/\s+/g, "")} label={section.label} />}
+              icon={<SectionLogo logoKey={getLogoKey(section.key)} logoUrl={brandLogos[section.key]} label={section.label} />}
               badge={`${section.totalCount} ${section.totalCount === 1 ? "Pair" : "Pairs"}`}
               title={section.label}
               gradient="from-red-700 via-[#FD0002] to-red-500"
@@ -671,13 +665,14 @@ function TabIcon({ tab, active }) {
   if (tab.key === ACCESSORIES_KEY) {
     return <Watch className={`w-5 h-5 ${active ? "text-white" : "text-amber-600"}`} />;
   }
-  if (!tab.logoKey) {
+  if (!tab.logoKey && !tab.logoUrl) {
     return <Footprints className={`w-5 h-5 ${active ? "text-white" : "text-[#FD0002]"}`} />;
   }
   return (
     <span className={`flex items-center justify-center h-7 min-w-7 rounded-full ${active ? "bg-white px-1" : ""}`}>
       <BrandLogo
         brandKey={tab.logoKey}
+        src={tab.logoUrl}
         label={tab.label}
         className={`h-6 w-6 ${active ? "text-gray-900" : "text-black"}`}
         fallback={<Footprints className={`w-5 h-5 ${active ? "text-gray-900" : "text-[#FD0002]"}`} />}
@@ -687,11 +682,12 @@ function TabIcon({ tab, active }) {
 }
 
 // Brand logo next to a mobile section title
-function SectionLogo({ logoKey, label }) {
-  if (!logoKey) return <Footprints className="w-6 h-6 text-[#FD0002]" />;
+function SectionLogo({ logoKey, logoUrl, label }) {
+  if (!logoKey && !logoUrl) return <Footprints className="w-6 h-6 text-[#FD0002]" />;
   return (
     <BrandLogo
       brandKey={logoKey}
+      src={logoUrl}
       label={label}
       className="h-7 w-7 text-black"
       fallback={<Footprints className="w-6 h-6 text-[#FD0002]" />}

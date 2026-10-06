@@ -41,13 +41,27 @@ const FILE_LOGO_EXTENSIONS = ["svg", "png"];
 
 /**
  * Renders a brand's logo.
+ * - A logo uploaded by the admin (`src`) is used first.
  * - Bundled vector logos inherit the text color (so active/inactive tabs can recolor them).
  * - Otherwise tries /brands/<brandKey>.svg, then .png.
  * - Falls back to `fallback` when given, otherwise the brand name as a wordmark.
  */
-export default function BrandLogo({ brandKey, label, className = "h-6 w-6", fallback = undefined }) {
+export default function BrandLogo({ brandKey, label, className = "h-6 w-6", fallback = undefined, src = null }) {
   const vector = VECTOR_LOGOS[brandKey];
   const [fileIndex, setFileIndex] = useState(0);
+  const [srcFailed, setSrcFailed] = useState(false);
+
+  // Logo uploaded by the admin always wins
+  if (src && !srcFailed) {
+    return (
+      <img
+        src={src}
+        alt={label}
+        className={`${className} object-contain`}
+        onError={() => setSrcFailed(true)}
+      />
+    );
+  }
 
   if (vector) {
     return (

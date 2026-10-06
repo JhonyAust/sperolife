@@ -22,6 +22,8 @@ const couponRoutes = require('./routes/couponRoutes');
 const announcementRoutes = require('./routes/announcementRoutes');
 const adminAnnouncementRoutes = require('./routes/adminAnnouncementRoutes');
 const resellerRoutes = require('./routes/resellerRoutes');
+const brandRoutes = require('./routes/brandRoutes');
+const adminBrandRoutes = require('./routes/adminBrandRoutes');
 
 const app = express();
 
@@ -69,6 +71,8 @@ app.use('/api/coupon', couponRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/admin/announcements', adminAnnouncementRoutes);
 app.use('/api/reseller', resellerRoutes);
+app.use('/api/brands', brandRoutes);
+app.use('/api/admin/brands', adminBrandRoutes);
 
 app.get("/api/health", (req, res) => {
     res.json({
