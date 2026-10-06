@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import ProductDescription, { DescriptionFormatHint } from "../products/ProductDescription";
+import BrandLogoField from "./BrandLogoField";
 
 interface SizeVariant {
   size: string;
@@ -473,6 +474,7 @@ useEffect(() => {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-gray-900"
                   placeholder="Brand name"
                 />
+                <BrandLogoField brandName={formData.brand} onImageUpload={onImageUpload} />
               </div>
             </div>
 

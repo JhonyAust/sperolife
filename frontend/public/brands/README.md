@@ -1,5 +1,9 @@
 # Brand logos for the homepage brand tabs
 
+The easiest way to set a logo is in the admin panel: open any product, type the
+brand name, and use **Brand logo → Upload**. An uploaded logo always takes
+priority over the files and built-in logos below; **Use default** removes it.
+
 Nike, Adidas, Puma, New Balance, Reebok, Jordan and Fila logos are built in
 (`components/products/BrandLogo.tsx`).
 
