@@ -216,9 +216,11 @@ exports.getProductBySlug = async(req, res) => {
             });
         }
 
-        // Increment views
-        product.views += 1;
-        await product.save();
+        // Increment views (skipped for server-side lookups such as page titles/SEO)
+        if (req.query.trackView !== 'false') {
+            product.views += 1;
+            await product.save();
+        }
 
         res.json({
             success: true,

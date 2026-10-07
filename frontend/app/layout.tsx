@@ -8,6 +8,7 @@ import FrontendFooter from "@/components/layout/FrontendFooter";
 import { OptimizedDataLoader } from "@/components/Provider/OptimizedDataLoader";
 import MetaPixel from "@/components/MetaPixel/MetaPixel";
 import FrontendWhatsAppFloat from "@/components/layout/FrontendWhatsAppFloat";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_TITLE, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,8 +21,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SperoLife",
-  description: "Style You Believe In",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    locale: "en_BD",
+    images: [{ url: "/logo.png", alt: `${SITE_NAME} – ${SITE_TAGLINE}` }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({
