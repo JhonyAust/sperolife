@@ -12,6 +12,7 @@ import { fetchProductBySlug, fetchRelatedProducts } from "@/lib/redux/slices/pro
 import { addToCart, addToCartDB } from "@/lib/redux/slices/cartSlice";
 import { toggleWishlistItem, addToWishlist, removeFromWishlist } from "@/lib/redux/slices/wishlistSlice";
 import ProductDescription from "@/components/products/ProductDescription";
+import { WISHLIST_ENABLED } from "@/lib/features";
 import { PREORDER_MAX_QUANTITY, isPreorderable } from "@/lib/preorder";
 
 export default function ProductDetailsPage() {
@@ -568,6 +569,7 @@ const handleBuyNow = async () => {
                   </div>
                 </div>
 
+                {WISHLIST_ENABLED && (
                 <button
                   onClick={handleWishlistToggle}
                   className={`relative p-2 sm:p-2.5 rounded-lg border-2 transition-all duration-300 hover:scale-110 active:scale-95 group ${
@@ -582,6 +584,7 @@ const handleBuyNow = async () => {
                     }`}
                   />
                 </button>
+                )}
               </div>
 
               {/* Add to Cart Button */}
@@ -878,12 +881,14 @@ function ProductCard({ product }: { product: any }) {
           </div>
         )}
         
+        {WISHLIST_ENABLED && (
         <button
           onClick={handleWishlistToggle}
           className="absolute top-3 right-3 bg-white/90 backdrop-blur p-2 rounded-full hover:scale-110 transition-transform"
         >
           <Heart className={`w-5 h-5 ${isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
         </button>
+        )}
       </div>
       
       <div className="p-4 space-y-2">
@@ -894,17 +899,6 @@ function ProductCard({ product }: { product: any }) {
           {hasDiscount && (
             <span className="text-sm text-gray-400 line-through">৳{product.price.toFixed(2)}</span>
           )}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 fill-gray-300'}`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-gray-500">{product.rating.toFixed(1)}</span>
         </div>
       </div>
     </div>

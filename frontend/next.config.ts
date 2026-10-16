@@ -1,12 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Serve images straight from Cloudinary (already optimized there). The Next.js
+    // optimizer only accepted one Cloudinary folder and counts against Vercel's
+    // image quota; when either failed, admin previews showed as broken images.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
         port: "",
-        pathname: "/dadmbqpnd/**",
+        pathname: "/**",
       },
     ],
     formats: ["image/avif", "image/webp"],

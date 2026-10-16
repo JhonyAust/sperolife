@@ -50,6 +50,7 @@ import { logoutUser } from "@/lib/redux/slices/authSlice";
 import { getActiveAnnouncements } from "@/lib/redux/slices/announcementSlice";
 import AuthModal from "../auth/AuthModel";
 import CartSlider from "../cart/CartSlider";
+import { WISHLIST_ENABLED } from "@/lib/features";
 
 const categories = [
   { name: "Shirts", href: "/products?subCategory=Shirts", icon: Sparkles },
@@ -261,6 +262,7 @@ export default function Header() {
             {/* Actions */}
             <div className="flex items-center gap-2">
               {/* Wishlist */}
+              {WISHLIST_ENABLED && (
               <Link href="/wishlist">
                 <Button
                   variant="ghost"
@@ -275,6 +277,7 @@ export default function Header() {
                   )}
                 </Button>
               </Link>
+              )}
 
               {/* Cart - Opens Slider */}
               <Button
@@ -514,6 +517,7 @@ export default function Header() {
                   )}
                 </Link>
               ))}
+              {WISHLIST_ENABLED && (
               <Link
                     href="/wishlist"
                     onClick={() => setMobileMenuOpen(false)}
@@ -522,6 +526,7 @@ export default function Header() {
                     <Heart className="w-5 h-5 text-gray-600" />
                     <span className="font-medium text-gray-700">Wishlist</span>
                   </Link>
+              )}
             </div>
 
             {/* Quick Links */}

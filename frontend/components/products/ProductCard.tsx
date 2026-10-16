@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Heart, ShoppingCart, X, Check, Zap, Clock } from "lucide-react";
+import { WISHLIST_ENABLED } from "@/lib/features";
 import { PREORDER_MAX_QUANTITY, getSizeStock, getTotalStock, isPreorderable } from "@/lib/preorder";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -256,6 +257,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Wishlist Button */}
+        {WISHLIST_ENABLED && (
         <button
           onClick={handleWishlistToggle}
           disabled={togglingWishlist}
@@ -288,6 +290,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
         </button>
+        )}
 
         {/* Add to Cart Button */}
         {!showSizeModal && (

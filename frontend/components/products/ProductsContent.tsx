@@ -98,7 +98,6 @@ export default function ProductContent() {
     { label: "Price: Low to High", value: "price_asc", icon: <TrendingUp className="w-4 h-4" /> },
     { label: "Price: High to Low", value: "price_desc", icon: <TrendingDown className="w-4 h-4" /> },
     { label: "Most Popular", value: "popular", icon: <Star className="w-4 h-4" /> },
-    { label: "Best Rating", value: "rating", icon: <Sparkles className="w-4 h-4" /> },
     { label: "Biggest Discount", value: "discount", icon: <Percent className="w-4 h-4" /> },
   ];
 
