@@ -37,7 +37,7 @@ export default function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <h1 className="sr-only">SperoLife – Original Sneakers, Shirts &amp; Accessories in Bangladesh</h1>
+      <h1 className="sr-only">SperoLife – Sneakers, Shirts &amp; Accessories in Bangladesh</h1>
       <HomePage />
     </>
   );

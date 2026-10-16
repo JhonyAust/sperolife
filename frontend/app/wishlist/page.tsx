@@ -22,8 +22,11 @@ import {
 } from "@/lib/redux/slices/wishlistSlice";
 import { AppDispatch, RootState } from "@/lib/redux/store";
 import api from "@/lib/api";
+import { WISHLIST_ENABLED } from "@/lib/features";
+import Link from "next/link";
+import { Heart as HeartIcon, ShoppingBag as BagIcon } from "lucide-react";
 
-export default function WishlistPage() {
+function WishlistPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [isVisible, setIsVisible] = useState(false);
@@ -360,4 +363,35 @@ export default function WishlistPage() {
       `}</style>
     </div>
   );
+}
+
+// Shown while the wishlist feature is switched off (see lib/features.ts)
+function WishlistComingSoon() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center px-4 py-16 bg-gradient-to-br from-gray-50 to-white">
+      <div className="max-w-md w-full text-center bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+          <HeartIcon className="h-7 w-7 text-[#FD0002]" />
+        </div>
+        <span className="inline-block mb-3 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+          Coming soon
+        </span>
+        <h1 className="text-2xl font-bold text-gray-900">Wishlist is on its way</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          We&apos;re still building the wishlist. Meanwhile, browse our collection and add what you like to your cart.
+        </p>
+        <Link
+          href="/products"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#FD0002] px-5 py-3 text-sm font-semibold text-white hover:bg-[#E00002] transition-colors"
+        >
+          <BagIcon className="h-4 w-4" />
+          Shop products
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export default function Page() {
+  return WISHLIST_ENABLED ? <WishlistPage /> : <WishlistComingSoon />;
 }

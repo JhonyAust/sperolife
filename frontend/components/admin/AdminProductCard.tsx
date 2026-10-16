@@ -278,16 +278,7 @@ export default function AdminProductCard({ product, onEdit, onDelete, onToggleSt
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 pt-3 border-t-2 border-gray-100">
-          {/* Rating */}
-          <div className="flex flex-col items-center p-2 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl">
-            <div className="flex items-center gap-1 mb-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              <span className="text-sm font-black text-gray-900">{product.rating || 0}</span>
-            </div>
-            <span className="text-xs text-gray-600 font-semibold">Rating</span>
-          </div>
-          
+        <div className="grid grid-cols-2 gap-2 pt-3 border-t-2 border-gray-100">
           {/* Stock */}
           <div className={`flex flex-col items-center p-2 rounded-xl ${
             isOutOfStock ? 'bg-gradient-to-br from-red-50 to-pink-50' : 

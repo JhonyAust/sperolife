@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Shop All Products',
   description:
-    'Browse original Nike, Adidas, Vans and LV sneakers, shirts, shackets and accessories at SperoLife. Cash on delivery all over Bangladesh.',
+    'Browse Nike, Adidas, Vans and LV sneakers, shirts, shackets and accessories at SperoLife. Cash on delivery all over Bangladesh.',
   alternates: { canonical: '/products' },
 };
 
