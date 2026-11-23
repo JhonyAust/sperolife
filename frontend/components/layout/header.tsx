@@ -51,11 +51,11 @@ import { getActiveAnnouncements } from "@/lib/redux/slices/announcementSlice";
 import AuthModal from "../auth/AuthModel";
 import CartSlider from "../cart/CartSlider";
 import { WISHLIST_ENABLED } from "@/lib/features";
+import { SHIRTS_URL, SNEAKERS_URL } from "@/lib/categories";
 
 const categories = [
-  { name: "Shirts", href: "/products?subCategory=Shirts", icon: Sparkles },
-  { name: "Shackets", href: "/products?subCategory=Shacket", icon: ShoppingBag },
-  { name: "Sneakers", href: "/products?subCategory=Sneakers", icon: Footprints },
+  { name: "Shirts", href: SHIRTS_URL, icon: Sparkles },
+  { name: "Sneakers", href: SNEAKERS_URL, icon: Footprints },
   { name: "Sale", href: "/products?onSale=true", icon: Zap, badge: "Hot" },
 ];
 

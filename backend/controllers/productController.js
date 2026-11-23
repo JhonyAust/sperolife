@@ -35,8 +35,16 @@ exports.getAllProducts = async(req, res) => {
         }
 
         // ✅ CASE-INSENSITIVE SubCategory filter
+        // Comma-separated list matches any, e.g. "Shirts,T-Shirts,Shacket"
         if (subCategory) {
-            query.subCategory = { $regex: new RegExp(`^${subCategory}$`, 'i') };
+            const subCategories = String(subCategory)
+                .split(',')
+                .map((c) => c.trim())
+                .filter(Boolean)
+                .map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            if (subCategories.length > 0) {
+                query.subCategory = { $regex: new RegExp(`^(${subCategories.join('|')})$`, 'i') };
+            }
         }
 
         // ✅ CASE-INSENSITIVE Brand filter (comma-separated list matches any)
