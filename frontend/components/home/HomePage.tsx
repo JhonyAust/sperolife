@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag, ArrowRight, Footprints, Watch, Clock, Shirt } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "@/components/products/ProductCard";
@@ -15,13 +15,15 @@ import {
   buildBrandLogoMap,
 } from "@/lib/brands";
 import { isPreorderProduct } from "@/lib/preorder";
+import { isShirtProduct, SHIRTS_URL } from "@/lib/categories";
 import { getActiveBanners } from "@/lib/redux/slices/bannerSlice";
 import { fetchProducts } from "@/lib/redux/slices/productSlice";
 import { toast } from "react-hot-toast";
 
 const SECTION_PRODUCT_LIMIT = 10;
 
-const isShirt = (product) => (product.subCategory || "").toLowerCase().includes("shirt");
+// Shirts, T-Shirts and Shackets are one "Shirts" group
+const isShirt = isShirtProduct;
 
 const isSneaker = (product) =>
   !isShirt(product) && (product.subCategory || "").toLowerCase().includes("sneaker");
@@ -35,6 +37,7 @@ const isAccessory = (product) =>
 const MOBILE_SECTION_LIMIT = 5;
 const ACCESSORIES_KEY = "accessories";
 const PREORDER_KEY = "preorder";
+const SHIRTS_KEY = "shirts";
 
 // DOM id for a homepage section, e.g. "new balance" -> "section-new-balance"
 const sectionId = (key) => `section-${String(key).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}`;
@@ -138,6 +141,12 @@ export default function ModernHomePage() {
     [allProducts]
   );
 
+  // Shirts section (Shirts, T-Shirts and Shackets) above Accessories
+  const shirtProducts = React.useMemo(
+    () => sortByNewest(uniqueById(allProducts.filter(isShirt))),
+    [allProducts]
+  );
+
   // Out-of-stock products the admin opened for pre-order (never shirts on the homepage)
   const preorderProducts = React.useMemo(
     () => sortByNewest(uniqueById(allProducts.filter((p) => isPreorderProduct(p) && !isShirt(p)))),
@@ -155,9 +164,10 @@ export default function ModernHomePage() {
     return [
       ...brandTabs,
       ...(preorderProducts.length > 0 ? [{ key: PREORDER_KEY, label: "Pre-order", logoKey: null }] : []),
+      ...(shirtProducts.length > 0 ? [{ key: SHIRTS_KEY, label: "Shirts", logoKey: null }] : []),
       ...(accessoryProducts.length > 0 ? [{ key: ACCESSORIES_KEY, label: "Accessories", logoKey: null }] : []),
     ];
-  }, [sneakerBrandSections, accessoryProducts.length, preorderProducts.length, brandLogos]);
+  }, [sneakerBrandSections, accessoryProducts.length, preorderProducts.length, shirtProducts.length, brandLogos]);
 
   const scrollToSection = (key) => {
     setActiveSection(key);
@@ -523,12 +533,43 @@ export default function ModernHomePage() {
         </section>
       )}
 
+      {/* Shirts - Shirts, T-Shirts and Shackets, just above Accessories */}
+      {shirtProducts.length > 0 && (
+        <section
+          id={sectionId(SHIRTS_KEY)}
+          data-section-key={SHIRTS_KEY}
+          className={`py-4 lg:py-6 ${(sneakerBrandSections.length + (preorderProducts.length > 0 ? 1 : 0)) % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          style={{ scrollMarginTop: stickyOffset }}
+        >
+          <div className="md:hidden container mx-auto px-4">
+            <SubCategoryRow
+              title="Shirts"
+              icon={<Shirt className="w-6 h-6 text-[#FD0002]" />}
+              products={shirtProducts.slice(0, MOBILE_SECTION_LIMIT)}
+              loading={false}
+              onSeeAll={() => router.push(SHIRTS_URL)}
+            />
+          </div>
+          <div className="hidden md:block container mx-auto px-4 md:px-8 lg:px-16">
+            <SectionHeader
+              icon={<Shirt className="text-[#FD0002]" />}
+              badge={`${shirtProducts.length} ${shirtProducts.length === 1 ? "Item" : "Items"}`}
+              title="Shirts"
+              gradient="from-red-700 via-[#FD0002] to-red-500"
+              accentColor="red"
+              onViewAll={() => router.push(SHIRTS_URL)}
+            />
+            <HorizontalScroll products={shirtProducts.slice(0, SECTION_PRODUCT_LIMIT)} loading={false} />
+          </div>
+        </section>
+      )}
+
       {/* Accessories - bottom of homepage */}
       {accessoryProducts.length > 0 && (
         <section
           id={sectionId(ACCESSORIES_KEY)}
           data-section-key={ACCESSORIES_KEY}
-          className={`py-4 lg:py-6 ${(sneakerBrandSections.length + (preorderProducts.length > 0 ? 1 : 0)) % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
+          className={`py-4 lg:py-6 ${(sneakerBrandSections.length + (preorderProducts.length > 0 ? 1 : 0) + (shirtProducts.length > 0 ? 1 : 0)) % 2 === 0 ? "bg-white" : "bg-[#EAEDED]"}`}
           style={{ scrollMarginTop: stickyOffset }}
         >
           <div className="md:hidden container mx-auto px-4">
@@ -554,7 +595,7 @@ export default function ModernHomePage() {
         </section>
       )}
 
-      {!productsLoading && allProducts.length > 0 && sneakerBrandSections.length === 0 && accessoryProducts.length === 0 && preorderProducts.length === 0 && (
+      {!productsLoading && allProducts.length > 0 && sneakerBrandSections.length === 0 && accessoryProducts.length === 0 && preorderProducts.length === 0 && shirtProducts.length === 0 && (
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4 text-center">
             <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-3" />
@@ -703,6 +744,9 @@ function BrandTab({ tab, active, onClick }) {
 }
 
 function TabIcon({ tab, active }) {
+  if (tab.key === SHIRTS_KEY) {
+    return <Shirt className={`w-5 h-5 ${active ? "text-white" : "text-[#FD0002]"}`} />;
+  }
   if (tab.key === PREORDER_KEY) {
     return <Clock className={`w-5 h-5 ${active ? "text-white" : "text-amber-600"}`} />;
   }

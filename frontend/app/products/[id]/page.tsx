@@ -8,7 +8,10 @@ import {
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProductBySlug, fetchRelatedProducts } from "@/lib/redux/slices/productSlice";
+import { fetchProductBySlug } from "@/lib/redux/slices/productSlice";
+import api from "@/lib/api";
+import ProductScrollRow from "@/components/products/ProductScrollRow";
+import { isShirtProduct, SHIRT_SUBCATEGORIES, SHIRTS_URL, SNEAKER_SUBCATEGORIES, SNEAKERS_URL } from "@/lib/categories";
 import { addToCart, addToCartDB } from "@/lib/redux/slices/cartSlice";
 import { toggleWishlistItem, addToWishlist, removeFromWishlist } from "@/lib/redux/slices/wishlistSlice";
 import ProductDescription from "@/components/products/ProductDescription";
@@ -35,7 +38,9 @@ export default function ProductDetailsPage() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [buyingNow, setBuyingNow] = useState(false);
-  const [relatedProducts, setRelatedProducts] = useState([]);
+  // "You May Also Like": two rows (same group first, the other group second)
+  const [similarRows, setSimilarRows] = useState<{ key: string; title: string; href: string; products: any[] }[]>([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
   
   // Magnetic zoom states
   const [isZooming, setIsZooming] = useState(false);
@@ -49,19 +54,33 @@ export default function ProductDetailsPage() {
     }
   }, [params?.id, dispatch]);
 
-  // Fetch related products when product loads
+  // Load "You May Also Like" rows when the product loads.
+  // A shirt (incl. T-Shirts / Shackets) shows Shirts then Sneakers; anything else shows Sneakers then Shirts.
   useEffect(() => {
-    if (selectedProduct?._id) {
-      dispatch(fetchRelatedProducts({ productId: selectedProduct._id, limit: 4 }) as any)
-        .unwrap()
-        .then((data: any) => {
-          setRelatedProducts(data.products || []);
-        })
-        .catch((err: any) => {
-          console.error('Failed to fetch related products:', err);
-        });
-    }
-  }, [selectedProduct?._id, dispatch]);
+    if (!selectedProduct?._id) return;
+    const sneakers = { key: "sneakers", title: "Sneakers", href: SNEAKERS_URL, subCategories: SNEAKER_SUBCATEGORIES };
+    const shirts = { key: "shirts", title: "Shirts", href: SHIRTS_URL, subCategories: SHIRT_SUBCATEGORIES };
+    const groups = isShirtProduct(selectedProduct) ? [shirts, sneakers] : [sneakers, shirts];
+    let cancelled = false;
+
+    setSimilarLoading(true);
+    Promise.all(
+      groups.map((group) =>
+        api
+          .get("/products", { params: { subCategory: group.subCategories.join(","), limit: 11, page: 1 } })
+          .then(({ data }) => (data?.products || []).filter((p: any) => p._id !== selectedProduct._id).slice(0, 10))
+          .catch(() => [])
+      )
+    ).then((lists) => {
+      if (cancelled) return;
+      setSimilarRows(groups.map((group, i) => ({ key: group.key, title: group.title, href: group.href, products: lists[i] })));
+      setSimilarLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProduct?._id]);
 
   // Reset quantity when size changes to prevent ordering more than available
   useEffect(() => {
@@ -695,25 +714,22 @@ const handleBuyNow = async () => {
           </div>
         </div>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-12 sm:mt-16">
-            <div className="flex items-center justify-between mb-6 sm:mb-8">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">You May Also Like</h2>
-              <button
-                onClick={() => router.push(`/products?category=${product.category}`)}
-                className="text-[#FD0002] font-semibold text-sm sm:text-base hover:underline flex items-center gap-2 group"
-              >
-                View All
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-              {relatedProducts.map((relProduct: any) => (
-                <ProductCard key={relProduct._id} product={relProduct} />
-              ))}
-            </div>
+        {/* You May Also Like - two scrolling rows with See All */}
+        {(similarLoading || similarRows.some((row) => row.products.length > 0)) && (
+          <div className="mt-12 sm:mt-16 space-y-8 sm:space-y-10">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">You May Also Like</h2>
+            {similarLoading && similarRows.length === 0 ? (
+              <ProductScrollRow title="" products={[]} seeAllHref="/products" loading />
+            ) : (
+              similarRows.map((row) => (
+                <ProductScrollRow
+                  key={row.key}
+                  title={row.title}
+                  products={row.products}
+                  seeAllHref={row.href}
+                />
+              ))
+            )}
           </div>
         )}
       </div>

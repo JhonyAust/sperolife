@@ -26,6 +26,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "@/lib/redux/slices/productSlice";
 import ProductCard from "@/components/products/ProductCard";
+import { subCategoryLabel } from "@/lib/categories";
 
 export default function ProductContent() {
   const router = useRouter();
@@ -524,7 +525,7 @@ export default function ProductContent() {
               )}
               {selectedSubCategory && (
                 <FilterTag 
-                  label={selectedSubCategory} 
+                  label={subCategoryLabel(selectedSubCategory)} 
                   onRemove={() => {
                     setSelectedSubCategory("");
                     updateURL({ subCategory: '' });
